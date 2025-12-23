@@ -1,11 +1,11 @@
 # agent-tool
 
-CLI and service runtime for coding agents.
+CLI toolkit for coding agents.
 
-## Features (planned)
+## Features
 
-- Local service runtime for agent workflows
-- Config-driven providers, tools, and policies
+- Link AGENTS.md to CLAUDE.md
+- Install shadcn/ui from online registry with aliases
 - Project-level references for onboarding
 
 ## Install
@@ -28,29 +28,11 @@ agent-tool install-shadcn
 # or
 bun agent install-shadcn
 
-# Print effective config
-agent-tool config
-
 ```
 
 ## Configuration
 
-Create `agent.config.ts`:
-
-```ts
-import { defineConfig } from 'agent-tool/config'
-
-export default defineConfig({
-  service: {
-    host: '127.0.0.1',
-    port: 8787,
-  },
-  logs: {
-    dir: './.agent-tool/logs',
-    level: 'info',
-  },
-})
-```
+Create `agent.config.ts` with shadcn config below.
 
 ## Non-interactive shadcn setup
 
