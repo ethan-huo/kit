@@ -1,0 +1,26 @@
+{
+  "name": "agent-tool",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./config": "./src/config.ts"
+  },
+  "bin": {
+    "agent": "./src/cli.ts",
+    "agent-tool": "./src/cli.ts"
+  },
+  "scripts": {
+    "dev": "bun run src/cli.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "commander": "^14.0.2",
+    "confbox": "^0.2.2",
+    "valibot": "^1.2.0"
+  }
+}
