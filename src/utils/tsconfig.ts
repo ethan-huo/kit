@@ -1,6 +1,7 @@
 import path from "node:path"
 import { readFile } from "node:fs/promises"
 import { createRequire } from "node:module"
+import { parseJSONC } from "confbox"
 
 type Tsconfig = {
   extends?: string
@@ -112,18 +113,11 @@ function mergeTsconfig(base: Tsconfig | undefined, current: Tsconfig): Tsconfig 
   }
 }
 
-function parseJsonc(raw: string) {
-  const withoutBlock = raw.replace(/\/\*[\s\S]*?\*\//g, "")
-  const withoutLine = withoutBlock.replace(/\/\/.*$/gm, "")
-  const withoutTrailingCommas = withoutLine.replace(/,\s*([}\]])/g, "$1")
-  return JSON.parse(withoutTrailingCommas)
-}
-
 async function loadRawTsconfig(
   absolutePath: string
 ): Promise<{ config: Tsconfig; dir: string }> {
   const raw = await readFile(absolutePath, "utf8")
-  const parsed = parseJsonc(raw) as Tsconfig
+  const parsed = parseJSONC(raw) as Tsconfig
   const tsconfigDir = path.dirname(absolutePath)
 
   if (!parsed.extends) {
