@@ -168,6 +168,7 @@ export const installShadcnCommand = new Command("install-shadcn")
     const iconDeps =
       ICON_LIBRARIES.find((lib) => lib.value === iconLibrary)?.packages ?? []
     const deps = new Set<string>([...result.dependencies, ...iconDeps])
+    const devDeps = new Set<string>(result.devDependencies ?? [])
 
     if (!options.install || configShadcn.installDependencies === false) {
       console.log("")
@@ -176,6 +177,10 @@ export const installShadcnCommand = new Command("install-shadcn")
       )
       console.log(c.info("Dependencies required:"))
       Array.from(deps).forEach((dep) => console.log(`- ${dep}`))
+      if (devDeps.size) {
+        console.log(c.info("Dev dependencies required:"))
+        Array.from(devDeps).forEach((dep) => console.log(`- ${dep}`))
+      }
       return
     }
 
@@ -186,6 +191,17 @@ export const installShadcnCommand = new Command("install-shadcn")
       console.log("")
       await Bun.spawn({
         cmd: ["bun", "add", ...depList],
+        stdio: ["inherit", "inherit", "inherit"],
+      }).exited
+    }
+
+    if (devDeps.size) {
+      const depList = Array.from(devDeps)
+      console.log("")
+      console.log(c.info("Installing dev dependencies with bun add -d..."))
+      console.log("")
+      await Bun.spawn({
+        cmd: ["bun", "add", "-d", ...depList],
         stdio: ["inherit", "inherit", "inherit"],
       }).exited
     }

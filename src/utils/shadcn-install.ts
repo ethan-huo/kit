@@ -27,6 +27,7 @@ export type ShadcnAliases = {
 export type InstallResult = {
   components: number
   dependencies: string[]
+  devDependencies: string[]
   uiDir: string
   utilsPath: string
   stylePath: string
@@ -349,6 +350,7 @@ export async function installShadcnAll(
   await Bun.write(utilsPath, utilsFile.content)
 
   const dependencies = new Set<string>()
+  const devDependencies = new Set<string>(["@tailwindcss/vite"])
 
   for (const item of uiItems) {
     const component = await fetchJson<RegistryItem>(
@@ -360,7 +362,7 @@ export async function installShadcnAll(
     }
 
     if (component.devDependencies) {
-      component.devDependencies.forEach((dep) => dependencies.add(dep))
+      component.devDependencies.forEach((dep) => devDependencies.add(dep))
     }
 
     const files = component.files ?? []
@@ -457,6 +459,7 @@ export async function installShadcnAll(
   return {
     components: uiItems.length,
     dependencies: Array.from(deps).sort(),
+    devDependencies: Array.from(devDependencies).sort(),
     uiDir,
     utilsPath,
     stylePath,
