@@ -155,6 +155,10 @@ function buildIconTag(
   }
 
   const [, componentName, defaultProps] = match
+  if (componentName === "ICON") {
+    const props = otherProps ? ` ${otherProps}` : ""
+    return `<${iconName}${props} />`
+  }
   const usageWithIcon = defaultProps.replace(/\bICON\b/g, iconName)
   const props = `${usageWithIcon} ${otherProps}`.trim()
   return `<${componentName}${props ? ` ${props}` : ""} />`
@@ -167,26 +171,27 @@ function transformIcons(content: string, iconLibrary: string) {
 
   const targetLibrary = iconLibrary as (typeof ICON_LIBRARY_KEYS)[number]
   const iconsUsed = new Set<string>()
+  let keepIconPlaceholderImport = false
 
-  const iconPlaceholderRegex = /<IconPlaceholder\s+([^>]*?)\/>/g
+  const iconPlaceholderRegex = /<IconPlaceholder\b([^>]*?)\/>/g
   let updated = content.replace(
     iconPlaceholderRegex,
     (match, attrs: string) => {
-      const attributes = attrs.match(
-        /(\w+)\s*=\s*("[^"]*"|'[^']*'|\{[^}]*\})/g
-      )
-      if (!attributes) return match
+      const attributes = parseJsxAttributes(attrs)
+      if (!attributes.length) return match
 
       let iconName: string | null = null
       const otherAttrs: string[] = []
 
       for (const attr of attributes) {
-        const [rawName, rawValue] = attr.split("=")
-        const name = rawName.trim()
-        const value = rawValue?.trim()
+        const name = attr.name
+        const value = attr.value
 
-        if (name === targetLibrary && value) {
-          iconName = value.replace(/^["']|["']$/g, "")
+        if (name === targetLibrary) {
+          const parsed = extractStringLiteral(value)
+          if (parsed) {
+            iconName = parsed
+          }
           continue
         }
 
@@ -194,10 +199,17 @@ function transformIcons(content: string, iconLibrary: string) {
           continue
         }
 
-        otherAttrs.push(attr.trim())
+        if (value) {
+          otherAttrs.push(`${name}=${value}`)
+        } else {
+          otherAttrs.push(name)
+        }
       }
 
-      if (!iconName) return match
+      if (!iconName) {
+        keepIconPlaceholderImport = true
+        return match
+      }
       iconsUsed.add(iconName)
 
       const otherProps = otherAttrs.join(" ")
@@ -209,18 +221,22 @@ function transformIcons(content: string, iconLibrary: string) {
     return updated
   }
 
-  updated = updated.replace(
-    /import\s*{\s*([\s\S]*?)\s*}\s*from\s*["']([^"']+)["'];?/g,
-    (full, imports: string, modulePath: string) => {
-      const names = imports
-        .split(",")
-        .map((name: string) => name.trim())
-        .filter(Boolean)
-      const filtered = names.filter((name: string) => name !== "IconPlaceholder")
-      if (!filtered.length) return ""
-      return `import { ${filtered.join(", ")} } from "${modulePath}";`
-    }
-  )
+  if (!keepIconPlaceholderImport) {
+    updated = updated.replace(
+      /import\s*{\s*([\s\S]*?)\s*}\s*from\s*["']([^"']+)["'];?/g,
+      (full, imports: string, modulePath: string) => {
+        const names = imports
+          .split(",")
+          .map((name: string) => name.trim())
+          .filter(Boolean)
+        const filtered = names.filter(
+          (name: string) => name !== "IconPlaceholder"
+        )
+        if (!filtered.length) return ""
+        return `import { ${filtered.join(", ")} } from "${modulePath}";`
+      }
+    )
+  }
 
   const importLines = ICON_IMPORTS[targetLibrary].imports
   const iconImports = importLines
@@ -235,11 +251,196 @@ function transformIcons(content: string, iconLibrary: string) {
   return updated
 }
 
+type JsxAttr = { name: string; value?: string }
+
+function parseJsxAttributes(input: string): JsxAttr[] {
+  const attrs: JsxAttr[] = []
+  let i = 0
+  const len = input.length
+
+  while (i < len) {
+    while (i < len && /\s/.test(input[i]!)) i += 1
+    if (i >= len) break
+
+    let name = ""
+    while (i < len && /[A-Za-z0-9_:-]/.test(input[i]!)) {
+      name += input[i]!
+      i += 1
+    }
+    if (!name) break
+
+    while (i < len && /\s/.test(input[i]!)) i += 1
+    if (input[i] !== "=") {
+      attrs.push({ name })
+      continue
+    }
+    i += 1
+    while (i < len && /\s/.test(input[i]!)) i += 1
+
+    if (i >= len) {
+      attrs.push({ name })
+      break
+    }
+
+    const ch = input[i]!
+    if (ch === '"' || ch === "'") {
+      const quote = ch
+      i += 1
+      let value = ""
+      while (i < len && input[i] !== quote) {
+        value += input[i]!
+        i += 1
+      }
+      i += 1
+      attrs.push({ name, value: `${quote}${value}${quote}` })
+      continue
+    }
+
+    if (ch === "{") {
+      let depth = 0
+      let value = ""
+      while (i < len) {
+        const c = input[i]!
+        value += c
+        if (c === "{") depth += 1
+        if (c === "}") {
+          depth -= 1
+          if (depth === 0) {
+            i += 1
+            break
+          }
+        }
+        i += 1
+      }
+      attrs.push({ name, value })
+      continue
+    }
+
+    let value = ""
+    while (i < len && !/\s/.test(input[i]!)) {
+      value += input[i]!
+      i += 1
+    }
+    attrs.push({ name, value })
+  }
+
+  return attrs
+}
+
+function extractStringLiteral(value?: string): string | null {
+  if (!value) return null
+  const trimmed = value.trim()
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1)
+  }
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+    const inner = trimmed.slice(1, -1).trim()
+    if (
+      (inner.startsWith('"') && inner.endsWith('"')) ||
+      (inner.startsWith("'") && inner.endsWith("'"))
+    ) {
+      return inner.slice(1, -1)
+    }
+  }
+  return null
+}
+
 function buildCssVars(vars: Record<string, string> | undefined) {
   if (!vars) return ""
   return Object.entries(vars)
     .map(([key, value]) => `  --${key}: ${value};`)
     .join("\n")
+}
+
+const FONT_META: Record<
+  string,
+  { import: string; family: string }
+> = {
+  "geist-sans": {
+    import: "@fontsource-variable/geist-sans",
+    family: "'Geist Variable', sans-serif",
+  },
+  inter: {
+    import: "@fontsource-variable/inter",
+    family: "'Inter Variable', sans-serif",
+  },
+  "noto-sans": {
+    import: "@fontsource-variable/noto-sans",
+    family: "'Noto Sans Variable', sans-serif",
+  },
+  "nunito-sans": {
+    import: "@fontsource-variable/nunito-sans",
+    family: "'Nunito Sans Variable', sans-serif",
+  },
+  figtree: {
+    import: "@fontsource-variable/figtree",
+    family: "'Figtree Variable', sans-serif",
+  },
+  roboto: {
+    import: "@fontsource-variable/roboto",
+    family: "'Roboto', sans-serif",
+  },
+  raleway: {
+    import: "@fontsource-variable/raleway",
+    family: "'Raleway', sans-serif",
+  },
+  "dm-sans": {
+    import: "@fontsource-variable/dm-sans",
+    family: "'DM Sans', sans-serif",
+  },
+  "public-sans": {
+    import: "@fontsource-variable/public-sans",
+    family: "'Public Sans', sans-serif",
+  },
+  outfit: {
+    import: "@fontsource-variable/outfit",
+    family: "'Outfit', sans-serif",
+  },
+  "jetbrains-mono": {
+    import: "@fontsource-variable/jetbrains-mono",
+    family: "'JetBrains Mono Variable', monospace",
+  },
+  "geist-mono": {
+    import: "@fontsource-variable/geist-mono",
+    family: "'Geist Mono Variable', monospace",
+  },
+}
+
+function buildThemeInline(
+  cssVars: RegistryBaseItem["cssVars"],
+  fontKey?: string
+) {
+  const keys = new Set<string>()
+  Object.keys(cssVars?.light ?? {}).forEach((key) => keys.add(key))
+  Object.keys(cssVars?.dark ?? {}).forEach((key) => keys.add(key))
+
+  const lines: string[] = []
+  const fontMeta = fontKey ? FONT_META[fontKey] : undefined
+  if (fontMeta) {
+    lines.push(`  --font-sans: ${fontMeta.family};`)
+  }
+
+  const sortedKeys = Array.from(keys).sort()
+  for (const key of sortedKeys) {
+    if (key === "radius") continue
+    lines.push(`  --color-${key}: var(--${key});`)
+  }
+
+  if (keys.has("radius")) {
+    lines.push("  --radius-sm: calc(var(--radius) - 4px);")
+    lines.push("  --radius-md: calc(var(--radius) - 2px);")
+    lines.push("  --radius-lg: var(--radius);")
+    lines.push("  --radius-xl: calc(var(--radius) + 4px);")
+    lines.push("  --radius-2xl: calc(var(--radius) + 8px);")
+    lines.push("  --radius-3xl: calc(var(--radius) + 12px);")
+    lines.push("  --radius-4xl: calc(var(--radius) + 16px);")
+  }
+
+  if (!lines.length) return ""
+  return `@theme inline {\n${lines.join("\n")}\n}\n`
 }
 
 async function writeStyleFile(
@@ -249,9 +450,21 @@ async function writeStyleFile(
 ) {
   const lightVars = buildCssVars(cssVars?.light)
   const darkVars = buildCssVars(cssVars?.dark)
+  const themeInline = buildThemeInline(cssVars, config.font)
+  const fontMeta = FONT_META[config.font]
 
-  const css = `@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+  const importLines = [
+    '@import "tailwindcss";',
+    '@import "tw-animate-css";',
+    '@import "shadcn/tailwind.css";',
+  ]
+  if (fontMeta) {
+    importLines.push(`@import "${fontMeta.import}";`)
+  }
+
+  const css = `${importLines.join("\n")}
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
 ${lightVars}
@@ -261,12 +474,17 @@ ${lightVars}
 ${darkVars}
 }
 
+${themeInline}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply font-sans bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }
 `
@@ -454,6 +672,10 @@ export async function installShadcnAll(
   const deps = new Set<string>([...CORE_DEPENDENCIES, ...baseDeps])
   for (const dep of dependencies) {
     deps.add(dep)
+  }
+  const fontMeta = FONT_META[config.font]
+  if (fontMeta) {
+    devDependencies.add(fontMeta.import)
   }
 
   return {
