@@ -21,22 +21,20 @@ bun add github:ethan-huo/kit
 kit init
 
 # Link AGENTS.md to CLAUDE.md in repo
-bun agent link-claude
+bun kit link-claude
 
 # Install shadcn/ui from online registry (requires config)
 kit install-shadcn
-# or
-bun agent install-shadcn
 
 ```
 
 ## Configuration
 
-Create `agent.config.ts` with shadcn config below.
+Create `kit.config.ts` with shadcn config below.
 
 ## Non-interactive shadcn setup
 
-Configure `agent.config.ts` to run without prompts:
+Configure `kit.config.ts` to run without prompts:
 
 ```ts
 import { defineConfig } from "kit/config"

@@ -10,7 +10,7 @@ program
   .name('kit')
   .description('Vibecoding project toolkit')
   .version('0.1.0')
-  .option('-c, --config <path>', 'config file path', 'agent.config.ts')
+  .option('-c, --config <path>', 'config file path', 'kit.config.ts')
 
 program.addCommand(initCommand)
 program.addCommand(linkClaudeCommand)

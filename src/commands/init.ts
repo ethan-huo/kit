@@ -26,7 +26,7 @@ export const initCommand = new Command('init')
   .description('Initialize kit in the current project')
   .option('-f, --force', 'overwrite existing config', false)
   .action(async (options) => {
-    const configPath = 'agent.config.ts'
+    const configPath = 'kit.config.ts'
     const file = Bun.file(configPath)
     const exists = await file.exists()
 

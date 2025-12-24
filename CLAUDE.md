@@ -1,6 +1,6 @@
 # kit
 
-CLI and service runtime for coding agents.
+Vibecoding project toolkit.
 
 ## Architecture
 
@@ -9,7 +9,7 @@ src/
 ├── cli.ts              # Commander.js entry, registers commands
 ├── config.ts           # Config schema and loader
 ├── commands/
-│   ├── init.ts         # Project init: creates agent.config.ts
+│   ├── init.ts         # Project init: creates kit.config.ts
 │   ├── config.ts       # Prints effective config
 │   ├── serve.ts        # Starts local service (placeholder)
 │   └── install-shadcn.ts # Installs shadcn/ui from local repo

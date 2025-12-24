@@ -49,7 +49,7 @@ export function defineConfig(config: ConfigInput): ConfigOutput {
 export async function loadConfig(
 	configPath?: string
 ): Promise<ConfigOutput> {
-	const path = configPath ?? "agent.config.ts";
+	const path = configPath ?? "kit.config.ts";
 	const absolutePath = Bun.pathToFileURL(
 		path.startsWith("/") ? path : `${process.cwd()}/${path}`
 	).href;

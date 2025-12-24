@@ -12,7 +12,7 @@ const PACKAGE_ROOT = path.resolve(import.meta.dirname, "../..")
 export const installShadcnCommand = new Command("install-shadcn")
   .description("Install shadcn/ui components from online registry")
   .option("--no-install", "skip bun add")
-  .option("-c, --config <path>", "agent config path", "agent.config.ts")
+  .option("-c, --config <path>", "kit config path", "kit.config.ts")
   .action(async (options) => {
     const configPath = options.config as string
     const configDir = path.isAbsolute(configPath)
@@ -22,7 +22,7 @@ export const installShadcnCommand = new Command("install-shadcn")
     const configShadcn = config.shadcn
     if (!configShadcn) {
       console.error(
-        c.error("Missing shadcn config. Add shadcn settings to agent.config.ts.")
+        c.error("Missing shadcn config. Add shadcn settings to kit.config.ts.")
       )
       return
     }
