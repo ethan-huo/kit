@@ -42,13 +42,7 @@ export type RadiusValue = (typeof RADIUS_VALUES)[number]
 export type DesignSystemConfig = {
   base: BaseValue
   style: StyleValue
-  baseColor: BaseColorValue
-  theme: ThemeValue
   iconLibrary: IconLibraryValue
-  font: FontValue
-  menuAccent: MenuAccentValue
-  menuColor: MenuColorValue
-  radius: RadiusValue
 }
 
 export const BASES = BASE_VALUES.map((value) => ({

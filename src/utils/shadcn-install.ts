@@ -1,7 +1,6 @@
 import path from "node:path"
 import { mkdir } from "node:fs/promises"
 import {
-  API_URL,
   BASE_DEPENDENCIES,
   CORE_DEPENDENCIES,
   REGISTRY_URL,
@@ -11,14 +10,12 @@ import {
 export type InstallPaths = {
   uiDir: string
   utilsPath: string
-  stylePath: string
   examplePath?: string
 }
 
 export type ShadcnAliases = {
   ui: string
   utils: string
-  style: string
   components?: string
   hooks?: string
   lib?: string
@@ -30,7 +27,6 @@ export type InstallResult = {
   devDependencies: string[]
   uiDir: string
   utilsPath: string
-  stylePath: string
   examplePath?: string
   previewDir?: string
   previewBlocks?: number
@@ -60,12 +56,6 @@ type RegistryItem = {
   files?: RegistryItemFile[]
 }
 
-type RegistryBaseItem = {
-  cssVars?: {
-    light?: Record<string, string>
-    dark?: Record<string, string>
-  }
-}
 
 async function ensureDir(dir: string) {
   await mkdir(dir, { recursive: true })
@@ -348,155 +338,9 @@ function extractStringLiteral(value?: string): string | null {
   return null
 }
 
-function buildCssVars(vars: Record<string, string> | undefined) {
-  if (!vars) return ""
-  return Object.entries(vars)
-    .map(([key, value]) => `  --${key}: ${value};`)
-    .join("\n")
-}
-
-const FONT_META: Record<
-  string,
-  { import: string; family: string }
-> = {
-  "geist-sans": {
-    import: "@fontsource-variable/geist-sans",
-    family: "'Geist Variable', sans-serif",
-  },
-  inter: {
-    import: "@fontsource-variable/inter",
-    family: "'Inter Variable', sans-serif",
-  },
-  "noto-sans": {
-    import: "@fontsource-variable/noto-sans",
-    family: "'Noto Sans Variable', sans-serif",
-  },
-  "nunito-sans": {
-    import: "@fontsource-variable/nunito-sans",
-    family: "'Nunito Sans Variable', sans-serif",
-  },
-  figtree: {
-    import: "@fontsource-variable/figtree",
-    family: "'Figtree Variable', sans-serif",
-  },
-  roboto: {
-    import: "@fontsource-variable/roboto",
-    family: "'Roboto', sans-serif",
-  },
-  raleway: {
-    import: "@fontsource-variable/raleway",
-    family: "'Raleway', sans-serif",
-  },
-  "dm-sans": {
-    import: "@fontsource-variable/dm-sans",
-    family: "'DM Sans', sans-serif",
-  },
-  "public-sans": {
-    import: "@fontsource-variable/public-sans",
-    family: "'Public Sans', sans-serif",
-  },
-  outfit: {
-    import: "@fontsource-variable/outfit",
-    family: "'Outfit', sans-serif",
-  },
-  "jetbrains-mono": {
-    import: "@fontsource-variable/jetbrains-mono",
-    family: "'JetBrains Mono Variable', monospace",
-  },
-  "geist-mono": {
-    import: "@fontsource-variable/geist-mono",
-    family: "'Geist Mono Variable', monospace",
-  },
-}
-
-function buildThemeInline(
-  cssVars: RegistryBaseItem["cssVars"],
-  fontKey?: string
-) {
-  const keys = new Set<string>()
-  Object.keys(cssVars?.light ?? {}).forEach((key) => keys.add(key))
-  Object.keys(cssVars?.dark ?? {}).forEach((key) => keys.add(key))
-
-  const lines: string[] = []
-  const fontMeta = fontKey ? FONT_META[fontKey] : undefined
-  if (fontMeta) {
-    lines.push(`  --font-sans: ${fontMeta.family};`)
-  }
-
-  const sortedKeys = Array.from(keys).sort()
-  for (const key of sortedKeys) {
-    if (key === "radius") continue
-    lines.push(`  --color-${key}: var(--${key});`)
-  }
-
-  if (keys.has("radius")) {
-    lines.push("  --radius-sm: calc(var(--radius) - 4px);")
-    lines.push("  --radius-md: calc(var(--radius) - 2px);")
-    lines.push("  --radius-lg: var(--radius);")
-    lines.push("  --radius-xl: calc(var(--radius) + 4px);")
-    lines.push("  --radius-2xl: calc(var(--radius) + 8px);")
-    lines.push("  --radius-3xl: calc(var(--radius) + 12px);")
-    lines.push("  --radius-4xl: calc(var(--radius) + 16px);")
-  }
-
-  if (!lines.length) return ""
-  return `@theme inline {\n${lines.join("\n")}\n}\n`
-}
-
-async function writeStyleFile(
-  config: DesignSystemConfig,
-  cssVars: RegistryBaseItem["cssVars"],
-  targetPath: string
-) {
-  const lightVars = buildCssVars(cssVars?.light)
-  const darkVars = buildCssVars(cssVars?.dark)
-  const themeInline = buildThemeInline(cssVars, config.font)
-  const fontMeta = FONT_META[config.font]
-
-  const importLines = [
-    '@import "tailwindcss";',
-    '@import "tw-animate-css";',
-    '@import "shadcn/tailwind.css";',
-  ]
-  if (fontMeta) {
-    importLines.push(`@import "${fontMeta.import}";`)
-  }
-
-  const css = `${importLines.join("\n")}
-
-@custom-variant dark (&:is(.dark *));
-
-:root {
-${lightVars}
-}
-
-.dark {
-${darkVars}
-}
-
-${themeInline}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply font-sans bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
-  }
-}
-`
-
-  await ensureDir(path.dirname(targetPath))
-  await Bun.write(targetPath, css)
-}
-
 type NormalizedAliases = {
   ui: string
   utils: string
-  style: string
   components?: string
 }
 
@@ -512,7 +356,6 @@ function normalizeAliases(aliases: ShadcnAliases): NormalizedAliases {
   return {
     ui: normalizeAliasImport(aliases.ui),
     utils: normalizeModuleImport(aliases.utils),
-    style: normalizeModuleImport(aliases.style),
     components: aliases.components
       ? normalizeAliasImport(aliases.components)
       : undefined,
@@ -524,10 +367,8 @@ export async function installShadcnAll(
   paths: InstallPaths,
   aliases: ShadcnAliases
 ): Promise<InstallResult> {
-  const initTemplate = "next"
   const uiDir = path.resolve(paths.uiDir)
   const utilsPath = path.resolve(paths.utilsPath)
-  const stylePath = path.resolve(paths.stylePath)
   const previewDir = path.resolve(uiDir, "..", "preview")
   const examplePath = path.resolve(paths.examplePath ?? path.join(previewDir, "example.tsx"))
   const normalizedAliases = normalizeAliases(aliases)
@@ -645,25 +486,6 @@ export async function installShadcnAll(
     }
   }
 
-  const initParams = new URLSearchParams({
-    base: config.base,
-    style: config.style,
-    baseColor: config.baseColor,
-    theme: config.theme,
-    iconLibrary: config.iconLibrary,
-    font: config.font,
-    menuAccent: config.menuAccent,
-    menuColor: config.menuColor,
-    radius: config.radius,
-    template: initTemplate,
-  })
-
-  const registryBase = await fetchJson<RegistryBaseItem>(
-    `${API_URL}/init?${initParams.toString()}`
-  )
-
-  await writeStyleFile(config, registryBase.cssVars, stylePath)
-
   if (utilsRegistryItem.dependencies) {
     utilsRegistryItem.dependencies.forEach((dep) => dependencies.add(dep))
   }
@@ -673,10 +495,6 @@ export async function installShadcnAll(
   for (const dep of dependencies) {
     deps.add(dep)
   }
-  const fontMeta = FONT_META[config.font]
-  if (fontMeta) {
-    devDependencies.add(fontMeta.import)
-  }
 
   return {
     components: uiItems.length,
@@ -684,7 +502,6 @@ export async function installShadcnAll(
     devDependencies: Array.from(devDependencies).sort(),
     uiDir,
     utilsPath,
-    stylePath,
     examplePath: exampleItem ? examplePath : undefined,
     previewDir: blockItems.length ? previewDir : undefined,
     previewBlocks: blockItems.length || undefined,

@@ -1,14 +1,8 @@
 import * as v from "valibot";
 import {
-	BASE_COLOR_VALUE_LIST,
 	BASE_VALUE_LIST,
-	FONT_VALUE_LIST,
 	ICON_LIBRARY_VALUE_LIST,
-	MENU_ACCENT_VALUE_LIST,
-	MENU_COLOR_VALUE_LIST,
-	RADIUS_VALUE_LIST,
 	STYLE_VALUE_LIST,
-	THEME_VALUE_LIST,
 } from "./utils/shadcn-data";
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
@@ -31,18 +25,12 @@ const configSchema = v.object({
 			installDependencies: v.optional(v.boolean(), true),
 			base: v.optional(v.picklist(BASE_VALUE_LIST), "base"),
 			style: v.optional(v.picklist(STYLE_VALUE_LIST), "vega"),
-			baseColor: v.optional(v.picklist(BASE_COLOR_VALUE_LIST), "neutral"),
-			theme: v.optional(v.picklist(THEME_VALUE_LIST), "neutral"),
 			iconLibrary: v.optional(v.picklist(ICON_LIBRARY_VALUE_LIST), "lucide"),
-			font: v.optional(v.picklist(FONT_VALUE_LIST), "inter"),
-			menuAccent: v.optional(v.picklist(MENU_ACCENT_VALUE_LIST), "subtle"),
-			menuColor: v.optional(v.picklist(MENU_COLOR_VALUE_LIST), "default"),
-			radius: v.optional(v.picklist(RADIUS_VALUE_LIST), "default"),
 			tsconfigPath: v.string(),
 			aliases: v.object({
 				ui: v.optional(v.string(), "@/components/ui"),
 				utils: v.optional(v.string(), "@/lib/utils"),
-				style: v.optional(v.string(), "@/styles/default.css"),
+				styles: v.optional(v.string(), "@/styles"),
 				components: v.optional(v.string(), "@/components"),
 				hooks: v.optional(v.string(), "@/components/hooks"),
 				lib: v.optional(v.string(), "@/lib"),

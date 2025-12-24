@@ -1,11 +1,13 @@
 import { Command } from "commander"
 import path from "node:path"
-import { mkdir } from "node:fs/promises"
+import { mkdir, cp, readdir } from "node:fs/promises"
 import { ICON_LIBRARIES } from "../utils/shadcn-data"
 import { installShadcnAll } from "../utils/shadcn-install"
 import { loadConfig } from "../config"
 import { c } from "../utils/color"
 import { loadTsconfig, resolveAliasPath } from "../utils/tsconfig"
+
+const PACKAGE_ROOT = path.resolve(import.meta.dirname, "../..")
 
 export const installShadcnCommand = new Command("install-shadcn")
   .description("Install shadcn/ui components from online registry")
@@ -28,32 +30,15 @@ export const installShadcnCommand = new Command("install-shadcn")
     const {
       base,
       style,
-      baseColor,
-      theme,
       iconLibrary,
-      font,
-      menuAccent,
-      menuColor,
-      radius,
       aliases,
       tsconfigPath,
     } = configShadcn
 
-    if (
-      !base ||
-      !style ||
-      !baseColor ||
-      !theme ||
-      !iconLibrary ||
-      !font ||
-      !menuAccent ||
-      !menuColor ||
-      !radius ||
-      !tsconfigPath
-    ) {
+    if (!base || !style || !iconLibrary || !tsconfigPath) {
       console.error(
         c.error(
-          "Missing shadcn config values. Ensure base/style/theme/icon/font/aliases/tsconfig are set."
+          "Missing shadcn config values. Ensure base/style/iconLibrary/tsconfigPath are set."
         )
       )
       return
@@ -98,21 +83,10 @@ export const installShadcnCommand = new Command("install-shadcn")
       : undefined
 
     const result = await installShadcnAll(
-      {
-        base,
-        style,
-        baseColor,
-        theme,
-        iconLibrary,
-        font,
-        menuAccent,
-        menuColor,
-        radius,
-      },
+      { base, style, iconLibrary },
       {
         uiDir: resolvePath(aliases.ui),
         utilsPath: resolvePath(aliases.utils, ".ts"),
-        stylePath: resolvePath(aliases.style, ".css"),
         examplePath,
       },
       aliases
@@ -123,10 +97,28 @@ export const installShadcnCommand = new Command("install-shadcn")
     console.log(
       c.info(`Utils file: ${path.relative(process.cwd(), result.utilsPath)}`)
     )
-    console.log(
-      c.info(`Style file: ${path.relative(process.cwd(), result.stylePath)}`)
-    )
     console.log(c.info(`Style class: style-${style}`))
+
+    // Copy themes to aliases.styles
+    if (aliases.styles) {
+      const themesSource = path.join(PACKAGE_ROOT, "assets/themes")
+      const stylesTarget = resolvePath(aliases.styles)
+      await mkdir(stylesTarget, { recursive: true })
+      const themeFiles = await readdir(themesSource)
+      for (const file of themeFiles) {
+        await cp(
+          path.join(themesSource, file),
+          path.join(stylesTarget, file),
+          { force: true }
+        )
+      }
+      console.log(
+        c.success(
+          `Themes copied: ${themeFiles.length} (${path.relative(process.cwd(), stylesTarget)})`
+        )
+      )
+    }
+
     if (base === "base") {
       const referencePath = path.join(configDir, "references", "base-ui.md")
       const referenceFile = Bun.file(referencePath)
