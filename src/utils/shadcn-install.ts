@@ -448,7 +448,9 @@ export async function installShadcnAll(
         file.content,
         config,
         normalizedAliases
-      ).replaceAll(`@/registry/bases/${config.base}/hooks/`, `${hooksAlias}/`)
+      )
+        .replaceAll(`@/registry/bases/${config.base}/hooks/`, `${hooksAlias}/`)
+        .replaceAll(`@/registry/new-york-v4/hooks/`, `${hooksAlias}/`)
       await ensureDir(path.dirname(target))
       await Bun.write(target, content)
     }
@@ -504,7 +506,9 @@ export async function installShadcnAll(
         config,
         normalizedAliases,
         exampleImport
-      ).replaceAll(`@/registry/bases/${config.base}/hooks/`, `${hooksAlias}/`)
+      )
+        .replaceAll(`@/registry/bases/${config.base}/hooks/`, `${hooksAlias}/`)
+        .replaceAll(`@/registry/new-york-v4/hooks/`, `${hooksAlias}/`)
       await ensureDir(path.dirname(targetPath))
       await Bun.write(targetPath, content)
     }
@@ -520,7 +524,9 @@ export async function installShadcnAll(
         exampleFile.content,
         config,
         normalizedAliases
-      ).replaceAll(`@/registry/bases/${config.base}/hooks/`, `${hooksAlias}/`)
+      )
+        .replaceAll(`@/registry/bases/${config.base}/hooks/`, `${hooksAlias}/`)
+        .replaceAll(`@/registry/new-york-v4/hooks/`, `${hooksAlias}/`)
       await ensureDir(path.dirname(examplePath))
       await Bun.write(examplePath, content)
     }
