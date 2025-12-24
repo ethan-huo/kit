@@ -1,4 +1,4 @@
-# agent-tool
+# kit
 
 CLI and service runtime for coding agents.
 

@@ -1,7 +1,7 @@
 import { Command } from "commander"
 import { c } from "../utils/color"
 
-const DEFAULT_CONFIG = `import { defineConfig } from 'agent-tool/config'
+const DEFAULT_CONFIG = `import { defineConfig } from 'kit/config'
 
 export default defineConfig({
   shadcn: {
@@ -23,7 +23,7 @@ export default defineConfig({
 `
 
 export const initCommand = new Command('init')
-  .description('Initialize agent-tool in the current project')
+  .description('Initialize kit in the current project')
   .option('-f, --force', 'overwrite existing config', false)
   .action(async (options) => {
     const configPath = 'agent.config.ts'
@@ -38,5 +38,5 @@ export const initCommand = new Command('init')
 
     await Bun.write(configPath, DEFAULT_CONFIG)
 
-    console.log(c.success("Initialized agent-tool config."))
+    console.log(c.success("Initialized kit config."))
   })

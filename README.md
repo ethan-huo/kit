@@ -1,6 +1,6 @@
-# agent-tool
+# kit
 
-CLI toolkit for coding agents.
+Vibecoding project toolkit.
 
 ## Features
 
@@ -11,20 +11,20 @@ CLI toolkit for coding agents.
 ## Install
 
 ```bash
-bun add github:ethan-huo/agent-tool
+bun add github:ethan-huo/kit
 ```
 
 ## Usage
 
 ```bash
 # Initialize project
-agent-tool init
+kit init
 
 # Link AGENTS.md to CLAUDE.md in repo
 bun agent link-claude
 
 # Install shadcn/ui from online registry (requires config)
-agent-tool install-shadcn
+kit install-shadcn
 # or
 bun agent install-shadcn
 
@@ -39,7 +39,7 @@ Create `agent.config.ts` with shadcn config below.
 Configure `agent.config.ts` to run without prompts:
 
 ```ts
-import { defineConfig } from "agent-tool/config"
+import { defineConfig } from "kit/config"
 
 export default defineConfig({
   shadcn: {
@@ -69,7 +69,7 @@ export default defineConfig({
 Run:
 
 ```bash
-agent-tool install-shadcn
+kit install-shadcn
 ```
 
 

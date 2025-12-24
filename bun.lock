@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "agent-tool",
+      "name": "kit",
       "dependencies": {
         "commander": "^14.0.2",
         "confbox": "^0.2.2",

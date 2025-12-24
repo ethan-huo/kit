@@ -1,13 +1,12 @@
 {
-  "name": "agent-tool",
+  "name": "kit",
   "version": "0.1.0",
   "type": "module",
   "exports": {
     "./config": "./src/config.ts"
   },
   "bin": {
-    "agent": "./src/cli.ts",
-    "agent-tool": "./src/cli.ts"
+    "kit": "./src/cli.ts"
   },
   "scripts": {
     "dev": "bun run src/cli.ts"

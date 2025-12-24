@@ -13,13 +13,13 @@ const serviceSchema = v.object({
 });
 
 const logsSchema = v.object({
-	dir: v.optional(v.string(), "./.agent-tool/logs"),
+	dir: v.optional(v.string(), "./.kit/logs"),
 	level: v.optional(v.picklist(["debug", "info", "warn", "error"]), "info"),
 });
 
 const configSchema = v.object({
 	service: v.optional(serviceSchema, { host: "127.0.0.1", port: 8787 }),
-	logs: v.optional(logsSchema, { dir: "./.agent-tool/logs", level: "info" }),
+	logs: v.optional(logsSchema, { dir: "./.kit/logs", level: "info" }),
 	shadcn: v.optional(
 		v.object({
 			installDependencies: v.optional(v.boolean(), true),
