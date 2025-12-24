@@ -6,16 +6,12 @@ const DEFAULT_CONFIG = `import { defineConfig } from 'kit/config'
 export default defineConfig({
   shadcn: {
     installDependencies: true,
-    base: "base",
-    style: "vega",
     iconLibrary: "lucide",
     tsconfigPath: "tsconfig.json",
     aliases: {
       ui: "@/components/ui",
       utils: "@/lib/utils",
-      styles: "@/styles",
       components: "@/components",
-      hooks: "@/components/hooks",
       lib: "@/lib",
     },
   },

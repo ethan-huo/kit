@@ -1,13 +1,12 @@
 import { Command } from "commander"
 import path from "node:path"
-import { mkdir, cp, readdir } from "node:fs/promises"
+import { mkdir } from "node:fs/promises"
 import { ICON_LIBRARIES } from "../utils/shadcn-data"
 import { installShadcnAll } from "../utils/shadcn-install"
 import { loadConfig } from "../config"
 import { c } from "../utils/color"
 import { loadTsconfig, resolveAliasPath } from "../utils/tsconfig"
 
-const PACKAGE_ROOT = path.resolve(import.meta.dirname, "../..")
 
 export const installShadcnCommand = new Command("install-shadcn")
   .description("Install shadcn/ui components from online registry")
@@ -27,22 +26,18 @@ export const installShadcnCommand = new Command("install-shadcn")
       return
     }
 
-    const {
-      base,
-      style,
-      iconLibrary,
-      aliases,
-      tsconfigPath,
-    } = configShadcn
+    const { iconLibrary, aliases, tsconfigPath } = configShadcn
 
-    if (!base || !style || !iconLibrary || !tsconfigPath) {
+    if (!iconLibrary || !tsconfigPath) {
       console.error(
         c.error(
-          "Missing shadcn config values. Ensure base/style/iconLibrary/tsconfigPath are set."
+          "Missing shadcn config values. Ensure iconLibrary/tsconfigPath are set."
         )
       )
       return
     }
+    const base = "base"
+    const style = "vega"
 
     console.log("")
     console.log(c.info("Installing shadcn/ui..."))
@@ -99,45 +94,21 @@ export const installShadcnCommand = new Command("install-shadcn")
     )
     console.log(c.info(`Style class: style-${style}`))
 
-    // Copy themes to aliases.styles
-    if (aliases.styles) {
-      const themesSource = path.join(PACKAGE_ROOT, "assets/themes")
-      const stylesTarget = resolvePath(aliases.styles)
-      await mkdir(stylesTarget, { recursive: true })
-      const themeFiles = await readdir(themesSource)
-      for (const file of themeFiles) {
-        await cp(
-          path.join(themesSource, file),
-          path.join(stylesTarget, file),
-          { force: true }
+    const referencePath = path.join(configDir, "references", "base-ui.md")
+    const referenceFile = Bun.file(referencePath)
+    if (!(await referenceFile.exists())) {
+      console.log(c.info("Writing Base UI references..."))
+      await mkdir(path.dirname(referencePath), { recursive: true })
+      const response = await fetch("https://base-ui.com/llms.txt")
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch https://base-ui.com/llms.txt: ${response.status}`
         )
       }
+      await Bun.write(referencePath, await response.text())
       console.log(
-        c.success(
-          `Themes copied: ${themeFiles.length} (${path.relative(process.cwd(), stylesTarget)})`
-        )
+        c.success(`References: ${path.relative(process.cwd(), referencePath)}`)
       )
-    }
-
-    if (base === "base") {
-      const referencePath = path.join(configDir, "references", "base-ui.md")
-      const referenceFile = Bun.file(referencePath)
-      if (!(await referenceFile.exists())) {
-        console.log(c.info("Writing Base UI references..."))
-        await mkdir(path.dirname(referencePath), { recursive: true })
-        const response = await fetch("https://base-ui.com/llms.txt")
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch https://base-ui.com/llms.txt: ${response.status}`
-          )
-        }
-        await Bun.write(referencePath, await response.text())
-        console.log(
-          c.success(
-            `References: ${path.relative(process.cwd(), referencePath)}`
-          )
-        )
-      }
     }
     if (result.examplePath) {
       console.log(

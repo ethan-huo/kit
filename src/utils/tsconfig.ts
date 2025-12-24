@@ -65,7 +65,7 @@ function matchAliasPattern(
     return importPath === pattern ? {} : null
   }
 
-  const [prefix, suffix] = pattern.split("*")
+  const [prefix = "", suffix = ""] = pattern.split("*")
   if (!importPath.startsWith(prefix) || !importPath.endsWith(suffix)) {
     return null
   }

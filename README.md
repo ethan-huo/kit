@@ -42,22 +42,12 @@ import { defineConfig } from "kit/config"
 export default defineConfig({
   shadcn: {
     installDependencies: true,
-    base: "base",
-    style: "vega",
-    baseColor: "neutral",
-    theme: "neutral",
     iconLibrary: "lucide",
-    font: "inter",
-    menuAccent: "subtle",
-    menuColor: "default",
-    radius: "default",
     tsconfigPath: "tsconfig.json",
     aliases: {
       components: "@/components",
-      hooks: "@/components/hooks",
       utils: "@/lib/utils",
       ui: "@/components/ui",
-      style: "@/styles/default.css",
       lib: "@/lib",
     },
   },

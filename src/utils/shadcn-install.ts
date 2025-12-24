@@ -17,7 +17,6 @@ export type ShadcnAliases = {
   ui: string
   utils: string
   components?: string
-  hooks?: string
   lib?: string
 }
 
@@ -38,6 +37,7 @@ type RegistryFile = {
   items: Array<{
     name: string
     type: string
+    files?: RegistryItemFile[]
   }>
 }
 
@@ -149,7 +149,7 @@ function buildIconTag(
     const props = otherProps ? ` ${otherProps}` : ""
     return `<${iconName}${props} />`
   }
-  const usageWithIcon = defaultProps.replace(/\bICON\b/g, iconName)
+  const usageWithIcon = (defaultProps ?? "").replace(/\bICON\b/g, iconName)
   const props = `${usageWithIcon} ${otherProps}`.trim()
   return `<${componentName}${props ? ` ${props}` : ""} />`
 }
@@ -362,6 +362,14 @@ function normalizeAliases(aliases: ShadcnAliases): NormalizedAliases {
   }
 }
 
+function deriveHooksAlias(aliases: NormalizedAliases) {
+  if (aliases.components) return `${aliases.components}/hooks`
+  if (aliases.ui.endsWith("/ui")) {
+    return `${aliases.ui.slice(0, -3)}/hooks`
+  }
+  return `${aliases.ui}/hooks`
+}
+
 export async function installShadcnAll(
   config: DesignSystemConfig,
   paths: InstallPaths,
@@ -369,14 +377,17 @@ export async function installShadcnAll(
 ): Promise<InstallResult> {
   const uiDir = path.resolve(paths.uiDir)
   const utilsPath = path.resolve(paths.utilsPath)
+  const hooksDir = path.resolve(uiDir, "..", "hooks")
   const previewDir = path.resolve(uiDir, "..", "preview")
   const examplePath = path.resolve(paths.examplePath ?? path.join(previewDir, "example.tsx"))
   const normalizedAliases = normalizeAliases(aliases)
+  const hooksAlias = deriveHooksAlias(normalizedAliases)
   const exampleImport = normalizedAliases.components
     ? `${normalizedAliases.components}/example`
     : "./example"
 
   await ensureDir(uiDir)
+  await ensureDir(hooksDir)
   await ensureDir(previewDir)
 
   const registry = await fetchJson<RegistryFile>(
@@ -386,6 +397,9 @@ export async function installShadcnAll(
   const uiItems = registry.items.filter((item) => item.type === "registry:ui")
   const blockItems = registry.items.filter(
     (item) => item.type === "registry:block"
+  )
+  const hookItems = registry.items.filter(
+    (item) => item.type === "registry:hook"
   )
   const exampleItem = registry.items.find(
     (item) => item.type === "registry:component" && item.name === "example"
@@ -434,9 +448,35 @@ export async function installShadcnAll(
         file.content,
         config,
         normalizedAliases
-      )
+      ).replaceAll(`@/registry/bases/${config.base}/hooks/`, `${hooksAlias}/`)
       await ensureDir(path.dirname(target))
       await Bun.write(target, content)
+    }
+  }
+
+  if (hookItems.length) {
+    for (const hookItem of hookItems) {
+      const hook = await fetchRegistryItem(
+        config,
+        hookItem.name,
+        hookItem.files?.[0]?.path
+      )
+      if (!hook) continue
+
+      if (hook.dependencies) {
+        hook.dependencies.forEach((dep) => dependencies.add(dep))
+      }
+
+      const hookFile = hook.files?.find((file) => file.content)
+      if (!hookFile?.content) continue
+
+      const targetPath = path.join(hooksDir, path.basename(hookFile.path))
+      const basePrefix = `@/registry/bases/${config.base}`
+      const content = hookFile.content
+        .replace(/^["']use client["'];?\s*\n/, "")
+        .replaceAll(`${basePrefix}/lib/utils`, normalizedAliases.utils)
+      await ensureDir(path.dirname(targetPath))
+      await Bun.write(targetPath, content)
     }
   }
 
@@ -464,7 +504,7 @@ export async function installShadcnAll(
         config,
         normalizedAliases,
         exampleImport
-      )
+      ).replaceAll(`@/registry/bases/${config.base}/hooks/`, `${hooksAlias}/`)
       await ensureDir(path.dirname(targetPath))
       await Bun.write(targetPath, content)
     }
@@ -480,7 +520,7 @@ export async function installShadcnAll(
         exampleFile.content,
         config,
         normalizedAliases
-      )
+      ).replaceAll(`@/registry/bases/${config.base}/hooks/`, `${hooksAlias}/`)
       await ensureDir(path.dirname(examplePath))
       await Bun.write(examplePath, content)
     }
@@ -490,7 +530,7 @@ export async function installShadcnAll(
     utilsRegistryItem.dependencies.forEach((dep) => dependencies.add(dep))
   }
 
-  const baseDeps = BASE_DEPENDENCIES[config.base] ?? []
+  const baseDeps = BASE_DEPENDENCIES.base ?? []
   const deps = new Set<string>([...CORE_DEPENDENCIES, ...baseDeps])
   for (const dep of dependencies) {
     deps.add(dep)

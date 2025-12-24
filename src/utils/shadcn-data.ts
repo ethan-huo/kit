@@ -2,7 +2,7 @@ export const API_URL = "https://ui.shadcn.com"
 export const REGISTRY_URL = `${API_URL}/r`
 
 const BASE_VALUES = ["radix", "base"] as const
-const STYLE_VALUES = ["vega", "nova", "maia", "lyra", "mira"] as const
+const STYLE_VALUES = ["vega"] as const
 const ICON_LIBRARY_VALUES = [
   "lucide",
   "tabler",
@@ -113,13 +113,7 @@ export const RADII = RADIUS_VALUES.map((value) => ({
 export const DEFAULT_CONFIG: DesignSystemConfig = {
   base: "radix",
   style: "vega",
-  baseColor: "neutral",
-  theme: "neutral",
   iconLibrary: "lucide",
-  font: "inter",
-  menuAccent: "subtle",
-  menuColor: "default",
-  radius: "default",
 }
 
 export const CORE_DEPENDENCIES = [

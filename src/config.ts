@@ -1,9 +1,5 @@
 import * as v from "valibot";
-import {
-	BASE_VALUE_LIST,
-	ICON_LIBRARY_VALUE_LIST,
-	STYLE_VALUE_LIST,
-} from "./utils/shadcn-data";
+import { ICON_LIBRARY_VALUE_LIST } from "./utils/shadcn-data";
 
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -23,16 +19,12 @@ const configSchema = v.object({
 	shadcn: v.optional(
 		v.object({
 			installDependencies: v.optional(v.boolean(), true),
-			base: v.optional(v.picklist(BASE_VALUE_LIST), "base"),
-			style: v.optional(v.picklist(STYLE_VALUE_LIST), "vega"),
 			iconLibrary: v.optional(v.picklist(ICON_LIBRARY_VALUE_LIST), "lucide"),
 			tsconfigPath: v.string(),
 			aliases: v.object({
 				ui: v.optional(v.string(), "@/components/ui"),
 				utils: v.optional(v.string(), "@/lib/utils"),
-				styles: v.optional(v.string(), "@/styles"),
 				components: v.optional(v.string(), "@/components"),
-				hooks: v.optional(v.string(), "@/components/hooks"),
 				lib: v.optional(v.string(), "@/lib"),
 			}),
 		})
