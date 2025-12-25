@@ -48,7 +48,7 @@ export default defineConfig({
       components: "@/components",
       utils: "@/lib/utils",
       ui: "@/components/ui",
-      lib: "@/lib",
+      style: "@/styles",
     },
   },
 })

@@ -11,8 +11,8 @@ export default defineConfig({
     aliases: {
       ui: "@/components/ui",
       utils: "@/lib/utils",
+      style: "@/styles",
       components: "@/components",
-      lib: "@/lib",
     },
   },
 })

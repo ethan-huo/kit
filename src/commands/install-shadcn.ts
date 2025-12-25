@@ -1,12 +1,13 @@
 import { Command } from "commander"
 import path from "node:path"
-import { mkdir } from "node:fs/promises"
+import { mkdir, cp, readdir } from "node:fs/promises"
 import { ICON_LIBRARIES } from "../utils/shadcn-data"
 import { installShadcnAll } from "../utils/shadcn-install"
 import { loadConfig } from "../config"
 import { c } from "../utils/color"
 import { loadTsconfig, resolveAliasPath } from "../utils/tsconfig"
 
+const PACKAGE_ROOT = path.resolve(import.meta.dirname, "../..")
 
 export const installShadcnCommand = new Command("install-shadcn")
   .description("Install shadcn/ui components from online registry")
@@ -93,6 +94,26 @@ export const installShadcnCommand = new Command("install-shadcn")
       c.info(`Utils file: ${path.relative(process.cwd(), result.utilsPath)}`)
     )
     console.log(c.info(`Style class: style-${style}`))
+
+    if (aliases.style) {
+      const themesSource = path.join(PACKAGE_ROOT, "assets/themes")
+      const stylesTarget = resolvePath(aliases.style)
+      await mkdir(stylesTarget, { recursive: true })
+      const themeFiles = await readdir(themesSource)
+      for (const file of themeFiles) {
+        await cp(path.join(themesSource, file), path.join(stylesTarget, file), {
+          force: true,
+        })
+      }
+      console.log(
+        c.success(
+          `Themes copied: ${themeFiles.length} (${path.relative(
+            process.cwd(),
+            stylesTarget
+          )})`
+        )
+      )
+    }
 
     const referencePath = path.join(configDir, "references", "base-ui.md")
     const referenceFile = Bun.file(referencePath)

@@ -24,8 +24,8 @@ const configSchema = v.object({
 			aliases: v.object({
 				ui: v.optional(v.string(), "@/components/ui"),
 				utils: v.optional(v.string(), "@/lib/utils"),
+				style: v.optional(v.string(), "@/styles"),
 				components: v.optional(v.string(), "@/components"),
-				lib: v.optional(v.string(), "@/lib"),
 			}),
 		})
 	),

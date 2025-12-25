@@ -17,7 +17,6 @@ export type ShadcnAliases = {
   ui: string
   utils: string
   components?: string
-  lib?: string
 }
 
 export type InstallResult = {
