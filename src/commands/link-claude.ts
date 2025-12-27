@@ -2,7 +2,7 @@ import { fmt } from 'argc/terminal'
 import { lstat, readdir, readlink, symlink } from 'node:fs/promises'
 import path from 'node:path'
 
-import type { AppHandlers } from '../schema'
+import type { AppHandlers } from '../cli'
 
 const MAX_DEPTH = 6
 const CLAUDE_FILE = 'CLAUDE.md'

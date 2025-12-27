@@ -2,7 +2,7 @@ import { fmt } from 'argc/terminal'
 import { mkdir, cp, readdir } from 'node:fs/promises'
 import path from 'node:path'
 
-import type { AppHandlers } from '../schema'
+import type { AppHandlers } from '../cli'
 
 import { loadConfig } from '../config'
 import { ICON_LIBRARIES } from '../utils/shadcn-data'

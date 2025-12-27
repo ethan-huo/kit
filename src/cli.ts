@@ -8,17 +8,25 @@ import { runSetupFmt } from './commands/setup-fmt'
 import { schema } from './schema'
 import { findWorkdir } from './utils/fs'
 
-cli(schema, {
+export const app = cli(schema, {
 	name: 'kit',
 	version: '0.1.0',
 	description: 'Vibecoding project toolkit',
-}).run({
 	context: async () => {
 		const workdir = (await findWorkdir()) ?? process.cwd()
 		return { workdir }
 	},
+})
+
+// Handler types inferred from app (includes context)
+export type AppHandlers = typeof app.Handlers
+
+app.run({
 	handlers: {
 		init: runInit,
+		g: {
+			cc: () => console.log('TODO: create claude memory files'),
+		},
 		'link-claude': runLinkClaude,
 		'install-shadcn': runInstallShadcn,
 		'setup-fmt': runSetupFmt,

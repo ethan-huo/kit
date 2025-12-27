@@ -1,5 +1,5 @@
 import { toStandardJsonSchema } from '@valibot/to-json-schema'
-import { c, type InferHandlers } from 'argc'
+import { c, group } from 'argc'
 import * as v from 'valibot'
 
 const s = toStandardJsonSchema
@@ -11,6 +11,13 @@ export const schema = {
 				force: v.optional(v.boolean(), false),
 			}),
 		),
+	),
+
+	g: group(
+		{ description: '' },
+		{
+			cc: c.meta({ description: 'Create Claude memory files' }),
+		},
 	),
 
 	'link-claude': c
@@ -39,8 +46,3 @@ export const schema = {
 		),
 }
 
-export type AppContext = {
-	workdir: string
-}
-
-export type AppHandlers = InferHandlers<typeof schema, AppContext>

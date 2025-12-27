@@ -1,7 +1,7 @@
 import { fmt } from 'argc/terminal'
 import path from 'node:path'
 
-import type { AppHandlers } from '../schema'
+import type { AppHandlers } from '../cli'
 
 const KIT_ROOT = import.meta.dirname + '/../..'
 

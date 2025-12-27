@@ -1,6 +1,6 @@
 import { fmt } from 'argc/terminal'
 
-import type { AppHandlers } from '../schema'
+import type { AppHandlers } from '../cli'
 
 const DEFAULT_CONFIG = `import { defineConfig } from 'kit/config'
 
