@@ -1,25 +1,27 @@
 {
-  "name": "kit",
-  "version": "0.1.0",
-  "type": "module",
-  "exports": {
-    "./config": "./src/config.ts"
-  },
-  "bin": {
-    "kit": "./src/cli.ts"
-  },
-  "scripts": {
-    "dev": "bun run src/cli.ts"
-  },
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "dependencies": {
-    "commander": "^14.0.2",
-    "confbox": "^0.2.2",
-    "valibot": "^1.2.0"
-  }
+	"name": "kit",
+	"version": "0.1.0",
+	"bin": {
+		"kit": "./src/cli.ts"
+	},
+	"type": "module",
+	"exports": {
+		"./config": "./src/config.ts"
+	},
+	"scripts": {
+		"dev": "bun run src/cli.ts",
+		"fmt": "bunx oxfmt ."
+	},
+	"dependencies": {
+		"@valibot/to-json-schema": "^1.5.0",
+		"argc": "github:ethan-huo/argc",
+		"confbox": "^0.2.2",
+		"valibot": "^1.2.0"
+	},
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	}
 }

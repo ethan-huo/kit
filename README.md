@@ -60,8 +60,6 @@ Run:
 kit install-shadcn
 ```
 
-
-
 ## License
 
 MIT

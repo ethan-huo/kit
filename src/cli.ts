@@ -1,19 +1,19 @@
 #!/usr/bin/env -S bun --no-env-file
-import { Command } from 'commander'
-import { initCommand } from './commands/init'
-import { linkClaudeCommand } from './commands/link-claude'
-import { installShadcnCommand } from './commands/install-shadcn'
+import { cli } from 'argc'
 
-const program = new Command()
+import { runInit } from './commands/init'
+import { runInstallShadcn } from './commands/install-shadcn'
+import { runLinkClaude } from './commands/link-claude'
+import { schema } from './schema'
 
-program
-  .name('kit')
-  .description('Vibecoding project toolkit')
-  .version('0.1.0')
-  .option('-c, --config <path>', 'config file path', 'kit.config.ts')
-
-program.addCommand(initCommand)
-program.addCommand(linkClaudeCommand)
-program.addCommand(installShadcnCommand)
-
-program.parse()
+cli(schema, {
+	name: 'kit',
+	version: '0.1.0',
+	description: 'Vibecoding project toolkit',
+}).run({
+	handlers: {
+		init: runInit,
+		'link-claude': runLinkClaude,
+		'install-shadcn': runInstallShadcn,
+	},
+})

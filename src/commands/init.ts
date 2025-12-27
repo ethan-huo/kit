@@ -1,5 +1,6 @@
-import { Command } from "commander"
-import { c } from "../utils/color"
+import { fmt } from 'argc/terminal'
+
+import type { AppHandlers } from '../schema'
 
 const DEFAULT_CONFIG = `import { defineConfig } from 'kit/config'
 
@@ -18,21 +19,19 @@ export default defineConfig({
 })
 `
 
-export const initCommand = new Command('init')
-  .description('Initialize kit in the current project')
-  .option('-f, --force', 'overwrite existing config', false)
-  .action(async (options) => {
-    const configPath = 'kit.config.ts'
-    const file = Bun.file(configPath)
-    const exists = await file.exists()
+export const runInit: AppHandlers['init'] = async ({ input }) => {
+	const { force } = input
+	const configPath = 'kit.config.ts'
+	const file = Bun.file(configPath)
+	const exists = await file.exists()
 
-    if (exists && !options.force) {
-      console.log(c.warn(`Config already exists: ${configPath}`))
-      console.log(c.info("Use --force to overwrite."))
-      return
-    }
+	if (exists && !force) {
+		console.log(fmt.warn(`Config already exists: ${configPath}`))
+		console.log(fmt.info('Use --force to overwrite.'))
+		return
+	}
 
-    await Bun.write(configPath, DEFAULT_CONFIG)
+	await Bun.write(configPath, DEFAULT_CONFIG)
 
-    console.log(c.success("Initialized kit config."))
-  })
+	console.log(fmt.success('Initialized kit config.'))
+}
