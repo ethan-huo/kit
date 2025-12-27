@@ -24,9 +24,6 @@ export type AppHandlers = typeof app.Handlers
 app.run({
 	handlers: {
 		init: runInit,
-		g: {
-			cc: () => console.log('TODO: create claude memory files'),
-		},
 		'link-claude': runLinkClaude,
 		'install-shadcn': runInstallShadcn,
 		'setup-fmt': runSetupFmt,

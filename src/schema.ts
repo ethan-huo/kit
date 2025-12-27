@@ -13,13 +13,6 @@ export const schema = {
 		),
 	),
 
-	g: group(
-		{ description: '' },
-		{
-			cc: c.meta({ description: 'Create Claude memory files' }),
-		},
-	),
-
 	'link-claude': c
 		.meta({ description: 'Link AGENTS.md to CLAUDE.md in repo folders' })
 		.input(s(v.object({}))),
