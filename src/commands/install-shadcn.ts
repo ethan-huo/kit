@@ -13,12 +13,11 @@ const PACKAGE_ROOT = path.resolve(import.meta.dirname, '../..')
 
 export const runInstallShadcn: AppHandlers['install-shadcn'] = async ({
 	input,
+	context,
 }) => {
 	const { install: shouldInstall, config: configPath } = input
-	const configDir = path.isAbsolute(configPath)
-		? path.dirname(configPath)
-		: path.dirname(path.resolve(process.cwd(), configPath))
-	const config = await loadConfig(configPath)
+	const { workdir } = context
+	const config = await loadConfig(path.join(workdir, configPath))
 	const configShadcn = config.shadcn
 	if (!configShadcn) {
 		fmt.error('Missing shadcn config. Add shadcn settings to kit.config.ts.')
@@ -41,7 +40,7 @@ export const runInstallShadcn: AppHandlers['install-shadcn'] = async ({
 	console.log('')
 
 	const resolveConfigPath = (value: string) =>
-		path.isAbsolute(value) ? value : path.resolve(configDir, value)
+		path.isAbsolute(value) ? value : path.resolve(workdir, value)
 	const tsconfigAbsolute = resolveConfigPath(tsconfigPath)
 	const tsconfig = await loadTsconfig(tsconfigAbsolute)
 	const resolvePath = (value: string, fallbackExt?: string) => {
@@ -51,7 +50,7 @@ export const runInstallShadcn: AppHandlers['install-shadcn'] = async ({
 		if (path.isAbsolute(trimmed)) {
 			resolved = trimmed
 		} else if (trimmed.startsWith('.')) {
-			resolved = path.resolve(configDir, trimmed)
+			resolved = path.resolve(workdir, trimmed)
 		} else {
 			const aliasResolved = resolveAliasPath(trimmed, tsconfig)
 			if (aliasResolved) {
@@ -60,7 +59,7 @@ export const runInstallShadcn: AppHandlers['install-shadcn'] = async ({
 				if (trimmed.startsWith('@') || trimmed.startsWith('~')) {
 					throw new Error(`Unable to resolve alias path: ${trimmed}`)
 				}
-				resolved = path.resolve(configDir, trimmed)
+				resolved = path.resolve(workdir, trimmed)
 			}
 		}
 
@@ -111,7 +110,7 @@ export const runInstallShadcn: AppHandlers['install-shadcn'] = async ({
 		)
 	}
 
-	const referencePath = path.join(configDir, 'references', 'base-ui.md')
+	const referencePath = path.join(workdir, 'references', 'base-ui.md')
 	const referenceFile = Bun.file(referencePath)
 	if (!(await referenceFile.exists())) {
 		console.log(fmt.info('Writing Base UI references...'))

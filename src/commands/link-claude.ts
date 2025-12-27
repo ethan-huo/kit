@@ -57,11 +57,11 @@ async function ensureAgentsLink(
 	return 'linked'
 }
 
-export const runLinkClaude: AppHandlers['link-claude'] = async () => {
-	const root = process.cwd()
+export const runLinkClaude: AppHandlers['link-claude'] = async ({ context }) => {
+	const { workdir } = context
 	const claudeFiles: string[] = []
 
-	await walkForClaudeFiles(root, 0, claudeFiles)
+	await walkForClaudeFiles(workdir, 0, claudeFiles)
 
 	let linked = 0
 	let skipped = 0
@@ -70,9 +70,9 @@ export const runLinkClaude: AppHandlers['link-claude'] = async () => {
 	for (const claudeFile of claudeFiles) {
 		const dir = path.dirname(claudeFile)
 		const result = await ensureAgentsLink(dir)
-		const claudeRel = path.relative(root, claudeFile) || CLAUDE_FILE
+		const claudeRel = path.relative(workdir, claudeFile) || CLAUDE_FILE
 		const agentsRel =
-			path.relative(root, path.join(dir, AGENTS_FILE)) || AGENTS_FILE
+			path.relative(workdir, path.join(dir, AGENTS_FILE)) || AGENTS_FILE
 
 		if (result === 'linked') {
 			linked += 1

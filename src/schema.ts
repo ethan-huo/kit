@@ -27,6 +27,20 @@ export const schema = {
 				}),
 			),
 		),
+
+	'setup-fmt': c
+		.meta({ description: 'Setup oxfmt formatter in the current project' })
+		.input(
+			s(
+				v.object({
+					force: v.optional(v.boolean(), false),
+				}),
+			),
+		),
 }
 
-export type AppHandlers = InferHandlers<typeof schema>
+export type AppContext = {
+	workdir: string
+}
+
+export type AppHandlers = InferHandlers<typeof schema, AppContext>
