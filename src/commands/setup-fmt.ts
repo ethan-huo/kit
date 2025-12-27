@@ -3,7 +3,7 @@ import path from 'node:path'
 
 import type { AppHandlers } from '../schema'
 
-const KIT_ROOT = import.meta.dirname + '/..'
+const KIT_ROOT = import.meta.dirname + '/../..'
 
 export const runSetupFmt: AppHandlers['setup-fmt'] = async ({
 	input,
