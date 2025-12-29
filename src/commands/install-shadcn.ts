@@ -110,6 +110,28 @@ export const runInstallShadcn: AppHandlers['install-shadcn'] = async ({
 		)
 	}
 
+	if (aliases.components) {
+		const componentsSource = path.join(PACKAGE_ROOT, 'assets/components')
+		const componentsTarget = resolvePath(aliases.components)
+		await mkdir(componentsTarget, { recursive: true })
+		const componentFiles = await readdir(componentsSource)
+		for (const file of componentFiles) {
+			await cp(
+				path.join(componentsSource, file),
+				path.join(componentsTarget, file),
+				{ force: true },
+			)
+		}
+		console.log(
+			fmt.success(
+				`Components helpers copied: ${componentFiles.length} (${path.relative(
+					process.cwd(),
+					componentsTarget,
+				)})`,
+			),
+		)
+	}
+
 	const referencePath = path.join(workdir, 'references', 'base-ui.md')
 	const referenceFile = Bun.file(referencePath)
 	if (!(await referenceFile.exists())) {
