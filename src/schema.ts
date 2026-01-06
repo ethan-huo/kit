@@ -28,14 +28,22 @@ export const schema = {
 			),
 		),
 
-	'setup-fmt': c
-		.meta({ description: 'Setup oxfmt formatter in the current project' })
-		.input(
-			s(
-				v.object({
-					force: v.optional(v.boolean(), false),
-				}),
+	setup: group({ description: 'Setup project tooling' }, {
+		fmt: c
+			.meta({ description: 'Setup oxfmt formatter in the current project' })
+			.input(
+				s(
+					v.object({
+						force: v.optional(v.boolean(), false),
+					}),
+				),
 			),
-		),
+	}),
+
+	ci: group({ description: 'CI/CD utilities' }, {
+		watch: c
+			.meta({ description: 'Watch GitHub Actions run and announce result via voice' })
+			.input(s(v.object({}))),
+	}),
 }
 

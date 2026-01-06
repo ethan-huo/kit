@@ -1,6 +1,7 @@
 #!/usr/bin/env -S bun --no-env-file
 import { cli } from 'argc'
 
+import { runCiWatch } from './commands/ci-watch'
 import { runInit } from './commands/init'
 import { runInstallShadcn } from './commands/install-shadcn'
 import { runLinkClaude } from './commands/link-claude'
@@ -26,6 +27,11 @@ app.run({
 		init: runInit,
 		'link-claude': runLinkClaude,
 		'install-shadcn': runInstallShadcn,
-		'setup-fmt': runSetupFmt,
+		setup: {
+			fmt: runSetupFmt,
+		},
+		ci: {
+			watch: runCiWatch,
+		},
 	},
 })

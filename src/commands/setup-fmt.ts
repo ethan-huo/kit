@@ -5,7 +5,7 @@ import type { AppHandlers } from '../cli'
 
 const KIT_ROOT = import.meta.dirname + '/../..'
 
-export const runSetupFmt: AppHandlers['setup-fmt'] = async ({
+export const runSetupFmt: AppHandlers['setup.fmt'] = async ({
 	input,
 	context,
 }) => {
