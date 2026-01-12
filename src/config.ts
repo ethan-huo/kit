@@ -2,7 +2,7 @@ import * as v from 'valibot'
 
 import { ICON_LIBRARY_VALUE_LIST } from './utils/shadcn-data'
 
-const configSchema = v.object({
+const configEntrySchema = v.object({
 	shadcn: v.optional(
 		v.object({
 			installDependencies: v.optional(v.boolean(), true),
@@ -18,8 +18,11 @@ const configSchema = v.object({
 	),
 })
 
+const configSchema = v.union([configEntrySchema, v.array(configEntrySchema)])
+
 export type ConfigInput = v.InferInput<typeof configSchema>
 export type ConfigOutput = v.InferOutput<typeof configSchema>
+export type ConfigEntry = v.InferOutput<typeof configEntrySchema>
 
 export function defineConfig(config: ConfigInput): ConfigOutput {
 	return v.parse(configSchema, config)
