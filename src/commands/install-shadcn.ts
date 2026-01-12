@@ -28,7 +28,9 @@ export const runInstallShadcn: AppHandlers['install-shadcn'] = async ({
 		.map((entry, index) => ({ index, shadcn: entry.shadcn }))
 		.filter((entry): entry is ShadcnEntry => Boolean(entry.shadcn))
 	if (!shadcnEntries.length) {
-		fmt.error('Missing shadcn config. Add shadcn settings to kit.config.ts.')
+		console.log(
+			fmt.error('Missing shadcn config. Add shadcn settings to kit.config.ts.'),
+		)
 		return
 	}
 
@@ -52,8 +54,10 @@ export const runInstallShadcn: AppHandlers['install-shadcn'] = async ({
 		const { iconLibrary, aliases, tsconfigPath } = configShadcn
 
 		if (!iconLibrary || !tsconfigPath) {
-			fmt.error(
-				`Missing shadcn config values in entry ${index + 1}. Ensure iconLibrary/tsconfigPath are set.`,
+			console.log(
+				fmt.error(
+					`Missing shadcn config values in entry ${index + 1}. Ensure iconLibrary/tsconfigPath are set.`,
+				),
 			)
 			return
 		}
