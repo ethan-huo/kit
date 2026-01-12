@@ -4,16 +4,16 @@ import path from 'node:path'
 
 import type { AppHandlers } from '../cli'
 
-import { loadConfig, type ConfigEntry } from '../config'
+import { loadConfig, type ShadcnEntry } from '../config'
 import { ICON_LIBRARIES } from '../utils/shadcn-data'
 import { installShadcnAll } from '../utils/shadcn-install'
 import { loadTsconfig, resolveAliasPath } from '../utils/tsconfig'
 
 const PACKAGE_ROOT = path.resolve(import.meta.dirname, '../..')
 
-type ShadcnEntry = {
+type ShadcnEntryWithIndex = {
 	index: number
-	shadcn: NonNullable<ConfigEntry['shadcn']>
+	shadcn: ShadcnEntry
 }
 
 export const runInstallShadcn: AppHandlers['install-shadcn'] = async ({
@@ -23,13 +23,17 @@ export const runInstallShadcn: AppHandlers['install-shadcn'] = async ({
 	const { install: shouldInstall, config: configPath } = input
 	const { workdir } = context
 	const config = await loadConfig(path.join(workdir, configPath))
-	const configEntries: ConfigEntry[] = Array.isArray(config) ? config : [config]
-	const shadcnEntries = configEntries
-		.map((entry, index) => ({ index, shadcn: entry.shadcn }))
-		.filter((entry): entry is ShadcnEntry => Boolean(entry.shadcn))
+	const shadcnEntries: ShadcnEntryWithIndex[] = (config.shadcn ?? []).map(
+		(entry, index) => ({
+			index,
+			shadcn: entry,
+		}),
+	)
 	if (!shadcnEntries.length) {
 		console.log(
-			fmt.error('Missing shadcn config. Add shadcn settings to kit.config.ts.'),
+			fmt.error(
+				'Missing shadcn config. Add entries under shadcn in kit.config.ts.',
+			),
 		)
 		return
 	}
@@ -45,9 +49,7 @@ export const runInstallShadcn: AppHandlers['install-shadcn'] = async ({
 	const devDeps = new Set<string>()
 	const shouldInstallDeps =
 		shouldInstall &&
-		shadcnEntries.some(
-			(entry) => entry.shadcn?.installDependencies !== false,
-		)
+		shadcnEntries.some((entry) => entry.shadcn.installDependencies !== false)
 
 	for (const { index, shadcn } of shadcnEntries) {
 		const configShadcn = shadcn

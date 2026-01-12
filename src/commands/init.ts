@@ -5,17 +5,19 @@ import type { AppHandlers } from '../cli'
 const DEFAULT_CONFIG = `import { defineConfig } from 'kit/config'
 
 export default defineConfig({
-  shadcn: {
-    installDependencies: true,
-    iconLibrary: "lucide",
-    tsconfigPath: "tsconfig.json",
-    aliases: {
-      ui: "@/components/ui",
-      utils: "@/lib/utils",
-      style: "@/styles",
-      components: "@/components",
+  shadcn: [
+    {
+      installDependencies: true,
+      iconLibrary: "lucide",
+      tsconfigPath: "tsconfig.json",
+      aliases: {
+        ui: "@/components/ui",
+        utils: "@/lib/utils",
+        style: "@/styles",
+        components: "@/components",
+      },
     },
-  },
+  ],
 })
 `
 
