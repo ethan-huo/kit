@@ -73,10 +73,10 @@ function transformComponentContent(
 	config: DesignSystemConfig,
 	aliases: NormalizedAliases,
 ) {
-	const basePrefix = `@/registry/bases/${config.base}`
+	const stylePrefix = `@/registry/${config.base}-${config.style}`
 	let output = content.replace(/^["']use client["'];?\s*\n/, '')
-	output = output.replaceAll(`${basePrefix}/ui/`, `${aliases.ui}/`)
-	output = output.replaceAll(`${basePrefix}/lib/utils`, aliases.utils)
+	output = output.replaceAll(`${stylePrefix}/ui/`, `${aliases.ui}/`)
+	output = output.replaceAll(`${stylePrefix}/lib/utils`, aliases.utils)
 	return transformIcons(output, config.iconLibrary)
 }
 
@@ -86,11 +86,11 @@ function transformBlockContent(
 	aliases: NormalizedAliases,
 	exampleImport: string,
 ) {
-	const basePrefix = `@/registry/bases/${config.base}`
+	const stylePrefix = `@/registry/${config.base}-${config.style}`
 	let output = content.replace(/^["']use client["'];?\s*\n/, '')
-	output = output.replaceAll(`${basePrefix}/ui/`, `${aliases.ui}/`)
-	output = output.replaceAll(`${basePrefix}/lib/utils`, aliases.utils)
-	output = output.replaceAll(`${basePrefix}/components/example`, exampleImport)
+	output = output.replaceAll(`${stylePrefix}/ui/`, `${aliases.ui}/`)
+	output = output.replaceAll(`${stylePrefix}/lib/utils`, aliases.utils)
+	output = output.replaceAll(`${stylePrefix}/components/example`, exampleImport)
 	return transformIcons(output, config.iconLibrary)
 }
 
@@ -99,13 +99,13 @@ function transformExampleContent(
 	config: DesignSystemConfig,
 	aliases: NormalizedAliases,
 ) {
-	const basePrefix = `@/registry/bases/${config.base}`
+	const stylePrefix = `@/registry/${config.base}-${config.style}`
 	let output = content.replace(/^["']use client["'];?\s*\n/, '')
-	output = output.replaceAll(`${basePrefix}/lib/utils`, aliases.utils)
+	output = output.replaceAll(`${stylePrefix}/lib/utils`, aliases.utils)
 	return output
 }
 
-const ICON_LIBRARY_KEYS = ['lucide', 'tabler', 'hugeicons', 'phosphor'] as const
+const ICON_LIBRARY_KEYS = ['lucide', 'tabler', 'hugeicons', 'phosphor', 'remixicon'] as const
 
 const ICON_IMPORTS: Record<
 	(typeof ICON_LIBRARY_KEYS)[number],
@@ -129,6 +129,10 @@ const ICON_IMPORTS: Record<
 	phosphor: {
 		imports: ['import { ICON } from "@phosphor-icons/react"'],
 		usage: '<ICON strokeWidth={2} />',
+	},
+	remixicon: {
+		imports: ['import { ICON } from "@remixicon/react"'],
+		usage: '<ICON />',
 	},
 }
 
@@ -450,7 +454,7 @@ export async function installShadcnAll(
 				config,
 				normalizedAliases,
 			)
-				.replaceAll(`@/registry/bases/${config.base}/hooks/`, `${hooksAlias}/`)
+				.replaceAll(`@/registry/${config.base}-${config.style}/hooks/`, `${hooksAlias}/`)
 				.replaceAll(`@/registry/new-york-v4/hooks/`, `${hooksAlias}/`)
 			await ensureDir(path.dirname(target))
 			await Bun.write(target, content)
@@ -474,10 +478,10 @@ export async function installShadcnAll(
 			if (!hookFile?.content) continue
 
 			const targetPath = path.join(hooksDir, path.basename(hookFile.path))
-			const basePrefix = `@/registry/bases/${config.base}`
+			const stylePrefix = `@/registry/${config.base}-${config.style}`
 			const content = hookFile.content
 				.replace(/^["']use client["'];?\s*\n/, '')
-				.replaceAll(`${basePrefix}/lib/utils`, normalizedAliases.utils)
+				.replaceAll(`${stylePrefix}/lib/utils`, normalizedAliases.utils)
 			await ensureDir(path.dirname(targetPath))
 			await Bun.write(targetPath, content)
 		}
@@ -508,7 +512,7 @@ export async function installShadcnAll(
 				normalizedAliases,
 				exampleImport,
 			)
-				.replaceAll(`@/registry/bases/${config.base}/hooks/`, `${hooksAlias}/`)
+				.replaceAll(`@/registry/${config.base}-${config.style}/hooks/`, `${hooksAlias}/`)
 				.replaceAll(`@/registry/new-york-v4/hooks/`, `${hooksAlias}/`)
 			await ensureDir(path.dirname(targetPath))
 			await Bun.write(targetPath, content)
@@ -526,7 +530,7 @@ export async function installShadcnAll(
 				config,
 				normalizedAliases,
 			)
-				.replaceAll(`@/registry/bases/${config.base}/hooks/`, `${hooksAlias}/`)
+				.replaceAll(`@/registry/${config.base}-${config.style}/hooks/`, `${hooksAlias}/`)
 				.replaceAll(`@/registry/new-york-v4/hooks/`, `${hooksAlias}/`)
 			await ensureDir(path.dirname(examplePath))
 			await Bun.write(examplePath, content)

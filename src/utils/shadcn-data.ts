@@ -8,6 +8,7 @@ const ICON_LIBRARY_VALUES = [
 	'tabler',
 	'hugeicons',
 	'phosphor',
+	'remixicon',
 ] as const
 const FONT_VALUES = [
 	'geist-sans',
@@ -67,6 +68,11 @@ export const ICON_LIBRARIES = [
 		value: 'phosphor',
 		label: 'Phosphor Icons',
 		packages: ['@phosphor-icons/react'],
+	},
+	{
+		value: 'remixicon',
+		label: 'Remix Icon',
+		packages: ['@remixicon/react'],
 	},
 ] as const
 
