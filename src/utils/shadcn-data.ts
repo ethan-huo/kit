@@ -1,5 +1,7 @@
 export const API_URL = 'https://ui.shadcn.com'
 export const REGISTRY_URL = `${API_URL}/r`
+export const SHADCN_PACKAGE_JSON_URL =
+	'https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/v4/package.json'
 
 const BASE_VALUES = ['radix', 'base'] as const
 const STYLE_VALUES = ['vega'] as const

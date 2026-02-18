@@ -5,6 +5,7 @@ import {
 	BASE_DEPENDENCIES,
 	CORE_DEPENDENCIES,
 	REGISTRY_URL,
+	SHADCN_PACKAGE_JSON_URL,
 	type DesignSystemConfig,
 } from './shadcn-data'
 
@@ -58,6 +59,36 @@ type RegistryItem = {
 
 async function ensureDir(dir: string) {
 	await mkdir(dir, { recursive: true })
+}
+
+async function fetchShadcnVersionMap(): Promise<Record<string, string>> {
+	try {
+		const pkg = await fetchJson<{ dependencies?: Record<string, string> }>(
+			SHADCN_PACKAGE_JSON_URL,
+		)
+		return pkg.dependencies ?? {}
+	} catch {
+		return {}
+	}
+}
+
+function pinDependencyVersions(
+	deps: Set<string>,
+	versionMap: Record<string, string>,
+): Set<string> {
+	const pinned = new Set<string>()
+	for (const dep of deps) {
+		const atIdx = dep.indexOf('@', 1)
+		const name = atIdx > 0 ? dep.slice(0, atIdx) : dep
+		const hasVersion = atIdx > 0
+
+		if (hasVersion || !versionMap[name]) {
+			pinned.add(dep)
+		} else {
+			pinned.add(`${name}@${versionMap[name]}`)
+		}
+	}
+	return pinned
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -604,10 +635,14 @@ export async function installShadcnAll(
 		deps.add(dep)
 	}
 
+	const versionMap = await fetchShadcnVersionMap()
+	const pinnedDeps = pinDependencyVersions(deps, versionMap)
+	const pinnedDevDeps = pinDependencyVersions(devDependencies, versionMap)
+
 	return {
 		components: uiItems.length,
-		dependencies: Array.from(deps).sort(),
-		devDependencies: Array.from(devDependencies).sort(),
+		dependencies: Array.from(pinnedDeps).sort(),
+		devDependencies: Array.from(pinnedDevDeps).sort(),
 		uiDir,
 		utilsPath,
 		examplePath: exampleItem ? examplePath : undefined,
