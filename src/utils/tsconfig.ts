@@ -1,4 +1,3 @@
-import { parseJSONC } from 'confbox'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
@@ -123,7 +122,7 @@ async function loadRawTsconfig(
 	absolutePath: string,
 ): Promise<{ config: Tsconfig; dir: string }> {
 	const raw = await readFile(absolutePath, 'utf8')
-	const parsed = parseJSONC(raw) as Tsconfig
+	const parsed = Bun.JSONC.parse(raw) as Tsconfig
 	const tsconfigDir = path.dirname(absolutePath)
 
 	if (!parsed.extends) {
