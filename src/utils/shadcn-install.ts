@@ -94,6 +94,30 @@ function transformBlockContent(
 	return transformIcons(output, config.iconLibrary)
 }
 
+function transformBlockInternalImports(
+	content: string,
+	config: DesignSystemConfig,
+	blockName: string,
+	fileRelPath: string,
+) {
+	const prefix = `@/registry/${config.base}-${config.style}/blocks/${blockName}/`
+	const fileDir = path.dirname(fileRelPath)
+
+	return content.replace(
+		new RegExp(
+			`(from\\s+["'])${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^"']+)(["'])`,
+			'g',
+		),
+		(_, before: string, importPath: string, after: string) => {
+			let relativePath = path.relative(fileDir, importPath)
+			if (!relativePath.startsWith('.')) {
+				relativePath = `./${relativePath}`
+			}
+			return `${before}${relativePath}${after}`
+		},
+	)
+}
+
 function transformExampleContent(
 	content: string,
 	config: DesignSystemConfig,
@@ -502,20 +526,44 @@ export async function installShadcnAll(
 				block.dependencies.forEach((dep) => dependencies.add(dep))
 			}
 
-			const blockFile = block.files?.find((file) => file.content)
-			if (!blockFile?.content) continue
+			const blockFiles = (block.files ?? []).filter((f) => f.content)
+			if (!blockFiles.length) continue
 
-			const targetPath = path.join(previewDir, `${blockItem.name}.tsx`)
-			const content = transformBlockContent(
-				blockFile.content,
-				config,
-				normalizedAliases,
-				exampleImport,
-			)
-				.replaceAll(`@/registry/${config.base}-${config.style}/hooks/`, `${hooksAlias}/`)
-				.replaceAll(`@/registry/new-york-v4/hooks/`, `${hooksAlias}/`)
-			await ensureDir(path.dirname(targetPath))
-			await Bun.write(targetPath, content)
+			const isMultiFile = blockFiles.length > 1
+
+			for (const blockFile of blockFiles) {
+				const blockPrefix = `blocks/${blockItem.name}/`
+				const pathIdx = blockFile.path.indexOf(blockPrefix)
+				const fileRelPath =
+					pathIdx >= 0
+						? blockFile.path.slice(pathIdx + blockPrefix.length)
+						: path.basename(blockFile.path)
+
+				const targetPath = isMultiFile
+					? path.join(previewDir, blockItem.name, fileRelPath)
+					: path.join(previewDir, `${blockItem.name}.tsx`)
+
+				let content = transformBlockContent(
+					blockFile.content!,
+					config,
+					normalizedAliases,
+					exampleImport,
+				)
+					.replaceAll(`@/registry/${config.base}-${config.style}/hooks/`, `${hooksAlias}/`)
+					.replaceAll(`@/registry/new-york-v4/hooks/`, `${hooksAlias}/`)
+
+				if (isMultiFile) {
+					content = transformBlockInternalImports(
+						content,
+						config,
+						blockItem.name,
+						fileRelPath,
+					)
+				}
+
+				await ensureDir(path.dirname(targetPath))
+				await Bun.write(targetPath, content)
+			}
 		}
 	}
 
