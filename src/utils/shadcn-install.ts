@@ -1,4 +1,4 @@
-import { mkdir } from 'node:fs/promises'
+import { mkdir, rm } from 'node:fs/promises'
 import path from 'node:path'
 
 import {
@@ -530,6 +530,15 @@ export async function installShadcnAll(
 			if (!blockFiles.length) continue
 
 			const isMultiFile = blockFiles.length > 1
+
+			// Clean up stale output from previous format (flat file vs directory)
+			const flatFile = path.join(previewDir, `${blockItem.name}.tsx`)
+			const blockDir = path.join(previewDir, blockItem.name)
+			if (isMultiFile) {
+				await rm(flatFile, { force: true })
+			} else {
+				await rm(blockDir, { recursive: true, force: true })
+			}
 
 			for (const blockFile of blockFiles) {
 				const blockPrefix = `blocks/${blockItem.name}/`
