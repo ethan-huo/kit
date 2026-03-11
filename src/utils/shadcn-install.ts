@@ -484,12 +484,21 @@ export async function installShadcnAll(
 
 	const dependencies = new Set<string>()
 	const devDependencies = new Set<string>(['@tailwindcss/vite'])
+	const hooksPrefix = `@/registry/${config.base}-${config.style}/hooks/`
 
-	for (const item of uiItems) {
-		const component = await fetchJson<RegistryItem>(
-			`${REGISTRY_URL}/styles/${config.base}-${config.style}/${item.name}.json`,
-		)
+	const replaceHooksAlias = (content: string) =>
+		content.replaceAll(hooksPrefix, `${hooksAlias}/`)
 
+	// Fetch all UI components in parallel
+	const uiComponents = await Promise.all(
+		uiItems.map((item) =>
+			fetchJson<RegistryItem>(
+				`${REGISTRY_URL}/styles/${config.base}-${config.style}/${item.name}.json`,
+			),
+		),
+	)
+
+	for (const component of uiComponents) {
 		if (component.dependencies) {
 			component.dependencies.forEach((dep) => dependencies.add(dep))
 		}
@@ -504,25 +513,23 @@ export async function installShadcnAll(
 			if (!file.path.includes('/ui/')) continue
 
 			const target = path.join(uiDir, path.basename(file.path))
-			const content = transformComponentContent(
-				file.content,
-				config,
-				normalizedAliases,
+			const content = replaceHooksAlias(
+				transformComponentContent(file.content, config, normalizedAliases),
 			)
-				.replaceAll(`@/registry/${config.base}-${config.style}/hooks/`, `${hooksAlias}/`)
-				.replaceAll(`@/registry/new-york-v4/hooks/`, `${hooksAlias}/`)
 			await ensureDir(path.dirname(target))
 			await Bun.write(target, content)
 		}
 	}
 
+	// Fetch all hooks in parallel
 	if (hookItems.length) {
-		for (const hookItem of hookItems) {
-			const hook = await fetchRegistryItem(
-				config,
-				hookItem.name,
-				hookItem.files?.[0]?.path,
-			)
+		const hooks = await Promise.all(
+			hookItems.map((item) =>
+				fetchRegistryItem(config, item.name, item.files?.[0]?.path),
+			),
+		)
+
+		for (const hook of hooks) {
 			if (!hook) continue
 
 			if (hook.dependencies) {
@@ -542,16 +549,21 @@ export async function installShadcnAll(
 		}
 	}
 
+	// Fetch all blocks in parallel
 	if (blockItems.length) {
-		for (const blockItem of blockItems) {
-			const block = await fetchRegistryItem(
-				config,
-				blockItem.name,
-				blockItem.files?.[0]?.path,
-			)
-			if (!block) {
-				continue
-			}
+		const blocks = await Promise.all(
+			blockItems.map(async (item) => ({
+				item,
+				data: await fetchRegistryItem(
+					config,
+					item.name,
+					item.files?.[0]?.path,
+				),
+			})),
+		)
+
+		for (const { item: blockItem, data: block } of blocks) {
+			if (!block) continue
 
 			if (block.dependencies) {
 				block.dependencies.forEach((dep) => dependencies.add(dep))
@@ -583,14 +595,14 @@ export async function installShadcnAll(
 					? path.join(previewDir, blockItem.name, fileRelPath)
 					: path.join(previewDir, `${blockItem.name}.tsx`)
 
-				let content = transformBlockContent(
-					blockFile.content!,
-					config,
-					normalizedAliases,
-					exampleImport,
+				let content = replaceHooksAlias(
+					transformBlockContent(
+						blockFile.content!,
+						config,
+						normalizedAliases,
+						exampleImport,
+					),
 				)
-					.replaceAll(`@/registry/${config.base}-${config.style}/hooks/`, `${hooksAlias}/`)
-					.replaceAll(`@/registry/new-york-v4/hooks/`, `${hooksAlias}/`)
 
 				if (isMultiFile) {
 					content = transformBlockInternalImports(
@@ -613,13 +625,9 @@ export async function installShadcnAll(
 		)
 		const exampleFile = example.files?.find((file) => file.content)
 		if (exampleFile?.content) {
-			const content = transformExampleContent(
-				exampleFile.content,
-				config,
-				normalizedAliases,
+			const content = replaceHooksAlias(
+				transformExampleContent(exampleFile.content, config, normalizedAliases),
 			)
-				.replaceAll(`@/registry/${config.base}-${config.style}/hooks/`, `${hooksAlias}/`)
-				.replaceAll(`@/registry/new-york-v4/hooks/`, `${hooksAlias}/`)
 			await ensureDir(path.dirname(examplePath))
 			await Bun.write(examplePath, content)
 		}
