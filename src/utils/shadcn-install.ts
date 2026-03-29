@@ -455,8 +455,11 @@ export async function installShadcnAll(
 	)
 
 	const uiItems = registry.items.filter((item) => item.type === 'registry:ui')
+	// preview is shadcn's own showcase page — it depends on their app routes
+	// (@/app/(create)/...) and internal registry modules, not portable
+	const SKIP_BLOCKS = new Set(['preview'])
 	const blockItems = registry.items.filter(
-		(item) => item.type === 'registry:block',
+		(item) => item.type === 'registry:block' && !SKIP_BLOCKS.has(item.name),
 	)
 	const hookItems = registry.items.filter(
 		(item) => item.type === 'registry:hook',
