@@ -572,6 +572,43 @@ export async function installShadcnAll(
 			const blockFiles = (block.files ?? []).filter((f) => f.content)
 			if (!blockFiles.length) continue
 
+			// Detect internal imports referencing sub-files missing from registry response
+			const blockPathPrefix = `blocks/${blockItem.name}/`
+			const existingSubPaths = new Set(
+				blockFiles
+					.map((f) => {
+						const idx = f.path.indexOf(blockPathPrefix)
+						return idx >= 0
+							? f.path
+									.slice(idx + blockPathPrefix.length)
+									.replace(/\.tsx?$/, '')
+							: null
+					})
+					.filter((p): p is string => p !== null),
+			)
+
+			const missingImports = new Set<string>()
+			for (const file of blockFiles) {
+				for (const imp of extractInternalBlockImportPaths(
+					file.content!,
+					config,
+					blockItem.name,
+				)) {
+					if (!existingSubPaths.has(imp)) {
+						missingImports.add(imp)
+					}
+				}
+			}
+
+			if (missingImports.size > 0) {
+				const extraFiles = await fetchMissingBlockSubFiles(
+					config,
+					blockItem.name,
+					[...missingImports],
+				)
+				blockFiles.push(...extraFiles)
+			}
+
 			const isMultiFile = blockFiles.length > 1
 
 			// Clean up stale output from previous format (flat file vs directory)
@@ -657,6 +694,61 @@ export async function installShadcnAll(
 		previewDir: blockItems.length ? previewDir : undefined,
 		previewBlocks: blockItems.length || undefined,
 	}
+}
+
+/**
+ * Scan block content for internal imports that reference sub-files
+ * not included in the registry API response.
+ */
+function extractInternalBlockImportPaths(
+	content: string,
+	config: DesignSystemConfig,
+	blockName: string,
+): string[] {
+	const prefix = `@/registry/${config.base}-${config.style}/blocks/${blockName}/`
+	const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+	const regex = new RegExp(`from\\s+["']${escapedPrefix}([^"']+)["']`, 'g')
+	const paths: string[] = []
+	let match: RegExpExecArray | null
+	while ((match = regex.exec(content)) !== null) {
+		paths.push(match[1]!)
+	}
+	return paths
+}
+
+/**
+ * Registry API sometimes omits sub-files from multi-file blocks.
+ * Fetch them directly from GitHub and normalize import paths
+ * from the source format (@/registry/bases/{base}/) to the
+ * registry format (@/registry/{base}-{style}/).
+ */
+async function fetchMissingBlockSubFiles(
+	config: DesignSystemConfig,
+	blockName: string,
+	subPaths: string[],
+): Promise<RegistryItemFile[]> {
+	const githubRaw =
+		'https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/v4/registry/bases'
+	const sourcePrefix = `@/registry/bases/${config.base}/`
+	const registryPrefix = `@/registry/${config.base}-${config.style}/`
+
+	const results = await Promise.all(
+		subPaths.map(async (subPath) => {
+			const url = `${githubRaw}/${config.base}/blocks/${blockName}/${subPath}.tsx`
+			const response = await fetch(url)
+			if (!response.ok) return null
+			const content = (await response.text()).replaceAll(
+				sourcePrefix,
+				registryPrefix,
+			)
+			return {
+				path: `registry/${config.base}-${config.style}/blocks/${blockName}/${subPath}.tsx`,
+				content,
+				type: 'registry:block',
+			} satisfies RegistryItemFile
+		}),
+	)
+	return results.filter((f): f is RegistryItemFile => f !== null)
 }
 
 async function fetchRegistryItem(
