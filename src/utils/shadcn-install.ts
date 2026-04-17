@@ -265,10 +265,6 @@ function transformIcons(content: string, iconLibrary: string) {
 		},
 	)
 
-	if (!iconsUsed.size) {
-		return updated
-	}
-
 	if (!keepIconPlaceholderImport) {
 		updated = updated.replace(
 			/import\s*{\s*([\s\S]*?)\s*}\s*from\s*["']([^"']+)["'];?/g,
@@ -284,6 +280,10 @@ function transformIcons(content: string, iconLibrary: string) {
 				return `import { ${filtered.join(', ')} } from "${modulePath}";`
 			},
 		)
+	}
+
+	if (!iconsUsed.size) {
+		return updated
 	}
 
 	const importLines = ICON_IMPORTS[targetLibrary].imports
@@ -455,11 +455,8 @@ export async function installShadcnAll(
 	)
 
 	const uiItems = registry.items.filter((item) => item.type === 'registry:ui')
-	// preview is shadcn's own showcase page — it depends on their app routes
-	// (@/app/(create)/...) and internal registry modules, not portable
-	const SKIP_BLOCKS = new Set(['preview'])
 	const blockItems = registry.items.filter(
-		(item) => item.type === 'registry:block' && !SKIP_BLOCKS.has(item.name),
+		(item) => item.type === 'registry:block',
 	)
 	const hookItems = registry.items.filter(
 		(item) => item.type === 'registry:hook',
@@ -623,7 +620,16 @@ export async function installShadcnAll(
 				await rm(blockDir, { recursive: true, force: true })
 			}
 
-			for (const blockFile of blockFiles) {
+			type ProcessedBlockFile = {
+				fileRelPath: string
+				targetPath: string
+				content: string
+				isCard: boolean
+				cardStem: string | null
+				unmappable: boolean
+			}
+
+			const processed: ProcessedBlockFile[] = blockFiles.map((blockFile) => {
 				const blockPrefix = `blocks/${blockItem.name}/`
 				const pathIdx = blockFile.path.indexOf(blockPrefix)
 				const fileRelPath =
@@ -653,8 +659,36 @@ export async function installShadcnAll(
 					)
 				}
 
-				await ensureDir(path.dirname(targetPath))
-				await Bun.write(targetPath, content)
+				const isCard = fileRelPath.startsWith('cards/')
+				const cardStem = isCard
+					? fileRelPath.replace(/^cards\//, '').replace(/\.tsx?$/, '')
+					: null
+
+				return {
+					fileRelPath,
+					targetPath,
+					content,
+					isCard,
+					cardStem,
+					unmappable: hasUnmappableInternalImport(content),
+				}
+			})
+
+			const skippedStems = new Set(
+				processed
+					.filter((p) => p.unmappable && p.cardStem)
+					.map((p) => p.cardStem!),
+			)
+
+			const kept = processed.filter((p) => !(p.unmappable && p.isCard))
+
+			for (const entry of kept) {
+				const content =
+					entry.fileRelPath === 'index.tsx'
+						? cleanupSkippedCardReferences(entry.content, skippedStems)
+						: entry.content
+				await ensureDir(path.dirname(entry.targetPath))
+				await Bun.write(entry.targetPath, content)
 			}
 		}
 	}
@@ -697,6 +731,63 @@ export async function installShadcnAll(
 		previewDir: blockItems.length ? previewDir : undefined,
 		previewBlocks: blockItems.length || undefined,
 	}
+}
+
+// shadcn's preview showcase imports helpers from their own Next.js app
+// (FONTS constants, URL-state hooks, IconPlaceholder with dynamic props, etc.)
+// that don't exist in consumer projects. Any card file hitting one of these
+// after transforms is dropped, and its reference is scrubbed from the parent.
+const UNMAPPABLE_INTERNAL_IMPORTS = [
+	'@/app/(create)/lib/fonts',
+	'@/app/(create)/lib/search-params',
+	'@/app/(app)/create/lib/search-params',
+	'@/app/(create)/components/icon-placeholder',
+	'"shadcn/icons"',
+	"'shadcn/icons'",
+]
+
+function hasUnmappableInternalImport(content: string): boolean {
+	return UNMAPPABLE_INTERNAL_IMPORTS.some((ref) => content.includes(ref))
+}
+
+function escapeRegex(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
+ * Remove imports of skipped card modules (resolved to `./cards/<stem>`)
+ * from a block's index file, along with their self-closing JSX usages.
+ */
+function cleanupSkippedCardReferences(
+	content: string,
+	skippedStems: Set<string>,
+): string {
+	if (!skippedStems.size) return content
+
+	const removedNames = new Set<string>()
+	const importRegex =
+		/import\s*{\s*([^}]+?)\s*}\s*from\s*["']\.\/cards\/([^"']+)["'];?[ \t]*\n?/g
+	let updated = content.replace(
+		importRegex,
+		(full, names: string, stem: string) => {
+			if (!skippedStems.has(stem)) return full
+			for (const name of names.split(',')) {
+				const trimmed = name.trim()
+				if (trimmed) removedNames.add(trimmed)
+			}
+			return ''
+		},
+	)
+
+	for (const name of removedNames) {
+		const jsxRegex = new RegExp(
+			`^[ \\t]*<${escapeRegex(name)}\\s*/>[ \\t]*\\n`,
+			'gm',
+		)
+		updated = updated.replace(jsxRegex, '')
+	}
+
+	return updated
 }
 
 /**
