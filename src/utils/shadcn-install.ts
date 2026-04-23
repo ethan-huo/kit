@@ -835,11 +835,12 @@ async function fetchMissingBlockSubFiles(
 				sourcePrefix,
 				registryPrefix,
 			)
-			return {
+			const file: RegistryItemFile = {
 				path: `registry/${config.base}-${config.style}/blocks/${blockName}/${subPath}.tsx`,
 				content,
 				type: 'registry:block',
-			} satisfies RegistryItemFile
+			}
+			return file
 		}),
 	)
 	return results.filter((f): f is RegistryItemFile => f !== null)
